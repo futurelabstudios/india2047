@@ -27,10 +27,16 @@ A local server is needed so the browser can load `score.mp3`. If the score can't
 | Right drag / Shift + drag | Slide across the ground |
 | Scroll / pinch | Zoom toward the cursor |
 | Double-click | Dive to that spot |
-| W A S D | Fly |
+| W A S D | Fly (Shift to boost) |
 | Q E | Turn |
 | R F | Climb / descend |
-| T P N M H | Tour, places, time of day, music, hide controls |
+| I | Immersive view of a place (← → for the next place, Esc to leave) |
+| N | Time of day |
+| C | Save a photo of the view |
+| L | Copy a link to this exact view |
+| T P M H ? | Tour, places, music, hide controls, help |
+
+New to it? The **Flight school** card in the corner lists every control and ticks each one off as you use it.
 
 ## What's inside
 
@@ -38,7 +44,20 @@ A local server is needed so the browser can load `score.mp3`. If the score can't
 
 **19 marvels to discover:** Gaganyaan launch, Chenab Bridge, Mumbai–Ahmedabad bullet train, air-taxi vertiport, vertical farm, green hydrogen hub, Gulf of Kutch wind farm, Vizhinjam port, Hanle observatory, Bharatiya Antariksh Station, thorium power, robot farms of Punjab, drone delivery, river dolphins, floating solar, elephant corridor, Statue of Unity, drone light show, Uttarayan kite sky.
 
-Plus maglev lines, EV traffic, air taxis, people, birds, ships, four times of day and fireworks at night.
+Plus maglev lines, EV traffic, air taxis, people, birds, ships, kites and fireworks at night.
+
+**Immersive view:** every place has a full-screen, letterboxed view. The drone drops to eye level and circles the landmark slowly, the place name stands in white behind the monument, and the story is shown beside it.
+
+**Grounded in real physics:**
+
+- **Sun:** it follows its true path for 15 August 2047 at the drone's position (NOAA solar equations). It rises in the east-north-east, stands about 82° high at noon over central India, and sets in the west-north-west.
+- **Drone:** it has momentum and air drag. Flicks glide to a stop and it banks into turns.
+- **Gaganyaan launch:** an integrated LVM3 ascent with real thrust, mass flow, drag in an exponential atmosphere and a gravity turn. Live T+ telemetry shows altitude, speed and g-load.
+- **Fireworks:** shells rise ballistically, and the stars slow under air drag as they fall.
+- **Kites:** they fly tethered on sagging lines, downwind in the monsoon breeze, sweeping fighter-kite figure-eights.
+- **Air taxis:** they bank at the coordinated-turn angle, tan φ = v²/(g·r).
+
+The map itself is stylised: landmarks are drawn far larger than the map scale so you can see them.
 
 ## Contribute
 
