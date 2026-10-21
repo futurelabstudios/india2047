@@ -51,11 +51,23 @@ Good first contributions:
 - Improve mobile performance or accessibility
 - Translate the UI and place text into Indian languages
 
+## Share your 2047 idea
+
+You don't need to write code to shape India 2047. Imagine how India solves one of its big challenges by 2047 and share it openly; the strongest ideas can become marvels in the flythrough.
+
+Themes: Health · Education · Climate & Energy · Cities & Mobility · Agriculture & Food · Water · Governance · Jobs & Economy · Culture & Languages · Science & Space
+
+- **No coding:** open a new issue with the **"Imagine a 2047 solution"** template.
+- **Add it directly:** copy [`solutions/_TEMPLATE.md`](solutions/_TEMPLATE.md) to `solutions/<theme>-<short-name>.md`, fill in the problem today, India in 2047, how we got there and a first step anyone could take this year, then open a pull request.
+
+See [`solutions/`](solutions/) for ideas already shared. Ideas in any Indian language are welcome.
+
 ## Project structure
 
 ```
 index.html     the whole experience: HTML, CSS and JavaScript
 score.mp3      the soundtrack
+solutions/     imagined 2047 solutions, one Markdown file each, plus the template
 CONTRIBUTING.md
 .github/       issue templates, PR template, Pages deploy workflow
 ```
