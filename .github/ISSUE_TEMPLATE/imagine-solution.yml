@@ -1,0 +1,54 @@
+name: Imagine a 2047 solution
+description: Pitch an idea for how India solves a challenge by 2047. No coding needed.
+title: "Idea: "
+labels: ["idea"]
+body:
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      options:
+        - Health
+        - Education
+        - Climate & Energy
+        - Cities & Mobility
+        - Agriculture & Food
+        - Water
+        - Governance
+        - Jobs & Economy
+        - Culture & Languages
+        - Science & Space
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem today
+      description: What challenge do people in India face right now?
+    validations:
+      required: true
+  - type: textarea
+    id: future
+    attributes:
+      label: India in 2047
+      description: What does life look like once this is solved?
+    validations:
+      required: true
+  - type: textarea
+    id: path
+    attributes:
+      label: How we got there
+      description: The key steps between now and 2047.
+  - type: textarea
+    id: first-step
+    attributes:
+      label: First step this year
+      description: One thing someone could start doing in the next 12 months.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
