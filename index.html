@@ -7,145 +7,247 @@
 <meta name="description" content="Fly a drone over a developed India in 2047 and discover the marvels that got us there. An open-source, browser-based 3D flythrough.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Poppins:wght@700;800&family=Hind:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: the world is the interface. A whisper of chrome: wordmark + discovery count top-left, icon dock top-right, one-line caption bottom-centre. Everything else opens on demand. */
+/* Layout: the world is the interface. Wordmark + marvel progress top-left, a labelled control rail top-right,
+   flight school bottom-left, caption bottom-centre, telemetry bottom-right. Place titles live in the 3D world, behind the landmarks. */
 :root{
-  --ink:#0b1424;
-  --glass:rgba(10,18,34,.5);
-  --glass-strong:rgba(10,18,34,.86);
-  --line:rgba(246,241,231,.14);
-  --ivory:#f6f1e7;
-  --muted:#b8c2d0;
+  --ink:#070d1a;
+  --glass:rgba(9,15,28,.52);
+  --glass-strong:rgba(9,15,28,.88);
+  --line:rgba(255,255,255,.12);
+  --line-strong:rgba(255,255,255,.22);
+  --white:#ffffff;
+  --ivory:#f4efe6;
+  --muted:#a9b3c2;
   --marigold:#f3ab3c;
   --peacock:#46b9b2;
-  --display:"Yatra One","Georgia",serif;
-  --body:"Hind","Segoe UI",system-ui,sans-serif;
+  --display:"Fraunces","Iowan Old Style","Georgia",serif;
+  --body:"Inter","Segoe UI",system-ui,-apple-system,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --r-lg:18px;--r-md:12px;
   color-scheme:dark;
 }
 html,body{height:100%}
-body{margin:0;background:var(--ink);color:var(--ivory);font-family:var(--body);font-size:15px;overflow:hidden;-webkit-font-smoothing:antialiased;touch-action:none}
+body{margin:0;background:var(--ink);color:var(--ivory);font-family:var(--body);font-size:14px;letter-spacing:-.005em;overflow:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;touch-action:none;font-feature-settings:"ss01","cv11"}
 #world{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none;cursor:grab}
 #world.dragging{cursor:grabbing}
 button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--marigold);outline-offset:2px}
-.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px) saturate(1.25);-webkit-backdrop-filter:blur(14px) saturate(1.25)}
+.glass{background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);box-shadow:0 10px 30px rgba(0,0,0,.22)}
 .hud{transition:opacity .6s ease}
-body.cinema .hud{opacity:0;pointer-events:none}
+body.cinema .hud,body.immersive .hud{opacity:0;pointer-events:none}
+kbd{font-family:var(--mono);font-size:10.5px;line-height:1;padding:3px 6px;border-radius:6px;border:1px solid var(--line-strong);border-bottom-width:2px;color:var(--white);background:rgba(255,255,255,.06)}
+.eyebrow{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:600}
 
-/* Wordmark + discoveries */
-#brand{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-#brand h1{font-family:var(--display);font-weight:400;font-size:22px;line-height:1;margin:0;letter-spacing:.01em;text-shadow:0 2px 14px rgba(0,0,0,.5);pointer-events:none}
-#brand h1 span{color:var(--marigold)}
-#found{display:inline-flex;align-items:center;gap:8px;height:30px;padding:0 12px 0 10px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:600;letter-spacing:.04em}
-#found .dots{display:flex;gap:3px}
-#found .dots i{width:5px;height:5px;border-radius:50%;background:rgba(246,241,231,.22)}
-#found .dots i.on{background:var(--marigold);box-shadow:0 0 6px var(--marigold)}
-#found b{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums}
+/* Wordmark + marvel progress */
+#brand{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));left:max(18px,env(safe-area-inset-left,0px));z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+#brand h1{font-family:var(--display);font-weight:600;font-size:26px;line-height:1;margin:0;letter-spacing:-.01em;font-variation-settings:"opsz" 96;text-shadow:0 2px 18px rgba(0,0,0,.45);pointer-events:none;color:var(--white)}
+#brand h1 span{color:var(--marigold);font-style:italic;font-weight:500}
+#found{display:flex;flex-direction:column;gap:7px;min-width:168px;padding:9px 12px 10px;border-radius:var(--r-md);cursor:pointer;text-align:left;transition:border-color .2s,background .2s}
+#found:hover{border-color:var(--line-strong);background:var(--glass-strong)}
+#found .top{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:500;color:var(--ivory)}
+#found .top i{width:8px;height:8px;transform:rotate(45deg);background:var(--marigold);box-shadow:0 0 10px rgba(243,171,60,.7);flex:none}
+#found .top b{font-weight:700;color:var(--white);font-variant-numeric:tabular-nums}
+#found .top .of{color:var(--muted);font-variant-numeric:tabular-nums}
+#found .top .go{margin-left:auto;color:var(--muted);font-size:11px}
+#found .meter{height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden}
+#found .meter i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--marigold),#ffd27a);transition:width .8s var(--ease)}
 
-/* Dock */
-#dock{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:6px;z-index:6}
-.ic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:background .2s,border-color .2s;position:relative}
-.ic:hover{background:var(--glass-strong)}
-.ic.on{border-color:var(--marigold);color:var(--marigold)}
-.ic svg{width:17px;height:17px}
-.ic[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:44px;right:0;white-space:nowrap;font-size:11.5px;padding:4px 8px;border-radius:6px;background:var(--glass-strong);border:1px solid var(--line);pointer-events:none}
+/* Control rail */
+#dock{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:6px;z-index:6;padding:6px;border-radius:999px}
+#dock hr{border:0;height:1px;width:22px;margin:2px auto;background:var(--line)}
+.ic{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid transparent;background:transparent;transition:background .2s,border-color .2s,color .2s;position:relative;color:var(--ivory)}
+.ic:hover{background:rgba(255,255,255,.08)}
+.ic.on{background:rgba(243,171,60,.16);border-color:rgba(243,171,60,.55);color:var(--marigold)}
+.ic svg{width:18px;height:18px}
+.ic .tip{position:absolute;right:52px;top:50%;transform:translate(6px,-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:12.5px;font-weight:500;padding:6px 8px 6px 11px;border-radius:10px;background:var(--glass-strong);border:1px solid var(--line);pointer-events:none;opacity:0;transition:opacity .18s,transform .18s var(--ease)}
+.ic:hover .tip,.ic:focus-visible .tip,#dock.reveal .tip{opacity:1;transform:translate(0,-50%)}
+.ic .tip kbd{font-size:10px}
+.ic.new::before{content:"";position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--marigold);box-shadow:0 0 0 2px var(--ink)}
 
 /* Popovers */
-.pop{position:fixed;z-index:7;top:calc(62px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));width:min(300px,calc(100vw - 32px));max-height:calc(100% - 140px);overflow:auto;border-radius:14px;padding:8px;background:var(--glass-strong)}
-.pop h3{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:6px 8px 6px}
-.row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border-radius:9px;border:0;background:none;cursor:pointer;text-align:left}
-.row:hover{background:rgba(246,241,231,.07)}
-.row.active{background:rgba(243,171,60,.14)}
-.row .n{font-weight:600;font-size:14px}
-.row .c{font-size:11px;color:var(--muted);white-space:nowrap}
+.pop{position:fixed;z-index:7;top:calc(16px + env(safe-area-inset-top,0px));right:calc(max(16px,env(safe-area-inset-right,0px)) + 66px);width:min(320px,calc(100vw - 100px));max-height:calc(100% - 40px);overflow:auto;border-radius:var(--r-lg);padding:10px;background:var(--glass-strong)}
+.pop h3{margin:6px 8px 8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 10px;border-radius:10px;border:0;background:none;cursor:pointer;text-align:left}
+.row:hover{background:rgba(255,255,255,.06)}
+.row.active{background:rgba(243,171,60,.13)}
+.row .n{font-weight:600;font-size:14px;color:var(--white)}
+.row .c{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .row.locked .n{color:var(--muted);font-weight:500}
-.row .mark{width:7px;height:7px;flex:none;transform:rotate(45deg);background:rgba(246,241,231,.25);align-self:center}
+.row .mark{width:7px;height:7px;flex:none;transform:rotate(45deg);background:rgba(255,255,255,.22)}
 .row .mark.on{background:var(--marigold)}
-#popFound{left:max(16px,env(safe-area-inset-left,0px));right:auto;top:calc(94px + env(safe-area-inset-top,0px))}
+.row .imm{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;border:1px solid var(--line);background:none;cursor:pointer;color:var(--muted);opacity:0;transition:opacity .15s}
+.row:hover .imm,.row:focus-within .imm{opacity:1}
+.row .imm:hover{color:var(--white);border-color:var(--line-strong)}
+.row .imm svg{width:14px;height:14px}
+#popFound{left:max(18px,env(safe-area-inset-left,0px));right:auto;top:calc(118px + env(safe-area-inset-top,0px))}
 .vol{display:flex;align-items:center;gap:10px;padding:8px 10px;font-size:12.5px;color:var(--muted)}
-.vol input{flex:1;accent-color:var(--marigold)}
+input[type=range]{flex:1;accent-color:var(--marigold)}
+/* Time of day */
+#popTime .clock{display:flex;align-items:baseline;justify-content:space-between;padding:2px 10px 0}
+#popTime .clock b{font-family:var(--display);font-weight:500;font-size:34px;color:var(--white);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+#popTime .clock span{font-size:12px;color:var(--muted)}
+#popTime .sunline{padding:2px 10px 10px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+#popTime .range{padding:4px 10px 6px}
+#popTime .range input{width:100%}
+#popTime .presets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 6px 4px}
+#popTime .presets button{border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:10px;padding:8px 0;cursor:pointer;font-size:12px;font-weight:500}
+#popTime .presets button:hover{border-color:var(--line-strong)}
+#popTime .presets button.on{border-color:rgba(243,171,60,.6);color:var(--marigold)}
+#popTime .note{font-size:11.5px;color:var(--muted);padding:6px 10px 4px;line-height:1.45}
 
-/* Cinematic place title */
-#placeTitle{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4;text-align:center;opacity:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-#placeTitle .k{font-family:var(--body);font-weight:600;font-size:clamp(12px,1.3vw,20px);letter-spacing:.42em;text-transform:uppercase;color:var(--ivory);opacity:.9;text-shadow:0 2px 18px rgba(0,0,0,.55);margin-bottom:.6em;transform:translateY(.4em)}
-#placeTitle .n{font-family:"Poppins",var(--body);font-weight:800;font-size:clamp(44px,10.5vw,176px);line-height:.95;letter-spacing:.14em;text-transform:uppercase;color:#fff;text-shadow:0 4px 40px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.35);text-wrap:balance;padding-left:.14em}
-#placeTitle.show{animation:titleIn 5.2s cubic-bezier(.2,.7,.2,1) forwards}
-#placeTitle.show .n{animation:trackIn 5.2s cubic-bezier(.2,.7,.2,1) forwards}
-#placeTitle.show .k{animation:kickIn 5.2s cubic-bezier(.2,.7,.2,1) forwards}
-@keyframes titleIn{0%{opacity:0}14%{opacity:1}72%{opacity:1}100%{opacity:0}}
-@keyframes trackIn{0%{letter-spacing:.02em;transform:scale(.94)}100%{letter-spacing:.2em;transform:scale(1.03)}}
-@keyframes kickIn{0%{opacity:0;transform:translateY(1.2em)}18%{opacity:.9;transform:translateY(0)}100%{opacity:.9;transform:translateY(0)}}
-@media (prefers-reduced-motion:reduce){#placeTitle.show{animation:titleFade 4s forwards}#placeTitle.show .n,#placeTitle.show .k{animation:none}@keyframes titleFade{0%{opacity:0}15%{opacity:1}75%{opacity:1}100%{opacity:0}}}
-body.record #placeTitle{display:none!important}
 /* Caption */
-#caption{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;width:max-content;max-width:calc(100vw - 32px);border-radius:16px;padding:9px 16px 10px;cursor:pointer;text-align:center;transition:opacity .5s,transform .5s;border:1px solid var(--line)}
-#caption.hide{opacity:0;transform:translate(-50%,8px);pointer-events:none}
-#caption .t{font-family:var(--display);font-size:19px;line-height:1.1}
-#caption .s{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
-#caption .s .co{font-family:var(--mono);letter-spacing:0;text-transform:none;opacity:.8}
-#caption .more{display:none;max-width:52ch;margin:8px auto 2px;font-size:13.5px;line-height:1.5;text-align:left;color:var(--ivory);opacity:.92}
+#caption{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;width:max-content;min-width:280px;max-width:calc(100vw - 32px);border-radius:var(--r-lg);padding:12px 14px 12px 18px;text-align:left;transition:opacity .5s,transform .5s var(--ease)}
+#caption.hide{opacity:0;transform:translate(-50%,10px);pointer-events:none}
+#caption .head{display:flex;align-items:center;gap:14px}
+#caption .ttl{border:0;background:none;padding:0;text-align:left;cursor:pointer;flex:1;min-width:0}
+#caption .t{font-family:var(--display);font-weight:500;font-size:21px;line-height:1.1;color:var(--white);letter-spacing:-.01em}
+#caption .s{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px;display:flex;gap:8px;align-items:center}
+#caption .s .co{font-family:var(--mono);letter-spacing:0;text-transform:none;opacity:.85}
+#caption .s .more-hint{letter-spacing:.04em;text-transform:none;color:var(--ivory);opacity:.7}
+#caption .acts{display:flex;gap:6px;flex:none}
+.pill{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:999px;border:1px solid var(--line-strong);background:rgba(255,255,255,.06);cursor:pointer;font-size:12.5px;font-weight:600;white-space:nowrap;transition:background .2s,border-color .2s}
+.pill:hover{background:rgba(255,255,255,.12)}
+.pill.primary{background:var(--white);color:#0b1222;border-color:var(--white)}
+.pill.primary:hover{background:#ffe7bf}
+.pill svg{width:14px;height:14px}
+#caption .more{display:none;max-width:56ch;margin:12px 0 2px;font-size:14px;line-height:1.6;color:var(--ivory);opacity:.92}
 #caption.open .more{display:block}
-#caption .chips{display:none;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:8px}
+#caption .chips{display:none;flex-wrap:wrap;gap:6px;margin-top:10px}
 #caption.open .chips{display:flex}
-#caption .chip{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid rgba(70,185,178,.45);color:#cdeeea;background:rgba(70,185,178,.12)}
-#caption .bar{height:2px;background:var(--line);border-radius:2px;margin-top:8px;overflow:hidden}
+.chip{font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid rgba(70,185,178,.45);color:#d3f1ee;background:rgba(70,185,178,.12)}
+#caption .bar{height:2px;background:var(--line);border-radius:2px;margin-top:10px;overflow:hidden}
 #caption .bar i{display:block;height:100%;width:0;background:var(--marigold)}
 
-/* Minimap */
-#minimap{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:92px;height:104px;z-index:5;opacity:.85;pointer-events:none}
-#mmPath{fill:rgba(246,241,231,.14);stroke:rgba(246,241,231,.55);stroke-width:6;stroke-linejoin:round}
+/* Minimap + telemetry */
+#minimap{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));width:92px;height:104px;z-index:5;opacity:.85;pointer-events:none}
+#mmPath{fill:rgba(255,255,255,.12);stroke:rgba(255,255,255,.55);stroke-width:6;stroke-linejoin:round}
 #mmPlaces circle{fill:rgba(243,171,60,.75)}
 #mmDot{fill:rgba(70,185,178,.35);stroke:#46b9b2;stroke-width:6}
+#telemetry{position:fixed;right:calc(max(18px,env(safe-area-inset-right,0px)) + 106px);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:5;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--ivory);text-align:right;text-shadow:0 1px 8px rgba(0,0,0,.7);pointer-events:none;opacity:.85;font-variant-numeric:tabular-nums}
+#telemetry .hl{color:var(--marigold)}
+@media (max-width:820px){#telemetry{display:none}}
 @media (max-width:640px){#minimap{display:none}}
-/* Discovery beacons + toast */
+
+/* Beacons, labels, toast, hint */
 #labels{position:fixed;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .bcn{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;border:0;background:none;padding:0;width:28px;height:28px;display:grid;place-items:center;will-change:transform,opacity}
 .bcn i{width:10px;height:10px;transform:rotate(45deg);background:var(--marigold);box-shadow:0 0 0 3px rgba(243,171,60,.25),0 0 14px var(--marigold);animation:pulse 2.2s ease-in-out infinite}
 .bcn.done i{background:var(--peacock);box-shadow:0 0 0 3px rgba(70,185,178,.22),0 0 10px var(--peacock);animation:none}
-.bcn span{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:999px;background:rgba(10,18,34,.8);border:1px solid var(--line);opacity:0;transition:opacity .2s;pointer-events:none}
+.bcn span{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--line);opacity:0;transition:opacity .2s;pointer-events:none}
 .bcn:hover span,.bcn:focus-visible span{opacity:1}
 @keyframes pulse{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.35)}}
-.plc{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;border:0;background:none;padding:0;font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--ivory);text-shadow:0 1px 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.9);white-space:nowrap;will-change:transform,opacity}
-#toast{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:8;width:min(340px,calc(100vw - 32px));border-radius:14px;padding:12px 14px;transform:translateY(12px);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;background:var(--glass-strong)}
+.plc{position:absolute;left:0;top:0;pointer-events:auto;cursor:pointer;border:0;background:none;padding:0;font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--white);text-shadow:0 1px 6px rgba(0,0,0,.8),0 0 2px rgba(0,0,0,.9);white-space:nowrap;will-change:transform,opacity}
+#toast{position:fixed;left:max(18px,env(safe-area-inset-left,0px));top:calc(126px + env(safe-area-inset-top,0px));z-index:8;width:min(340px,calc(100vw - 100px));border-radius:var(--r-lg);padding:14px 16px;transform:translateY(-8px);opacity:0;transition:opacity .5s,transform .5s var(--ease);pointer-events:none;background:var(--glass-strong)}
 #toast.show{opacity:1;transform:none}
 #toast .k{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--marigold);font-weight:600}
-#toast .n{font-family:var(--display);font-size:19px;line-height:1.15;margin:4px 0 4px}
-#toast .d{font-size:13px;line-height:1.45;color:var(--ivory);opacity:.9}
-#hint{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9;font-size:12px;padding:6px 12px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--line);opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap}
+#toast .n{font-family:var(--display);font-weight:500;font-size:20px;line-height:1.15;margin:5px 0;color:var(--white)}
+#toast .d{font-size:13px;line-height:1.5;color:var(--ivory);opacity:.9}
+#hint{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9;font-size:12.5px;font-weight:500;padding:7px 14px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--line);opacity:0;transition:opacity .4s;pointer-events:none;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
 #hint.show{opacity:1}
+body.immersive #hint{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body.immersive #toast{top:calc(7vh + 48px);bottom:auto}
+
+/* Flight school: every feature, discoverable */
+#school{position:fixed;left:max(18px,env(safe-area-inset-left,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:5;width:250px;border-radius:var(--r-lg);padding:12px 12px 8px;transition:opacity .6s,transform .5s var(--ease)}
+#school .hd{display:flex;align-items:center;gap:10px;border:0;background:none;padding:0 2px 6px;width:100%;cursor:pointer;text-align:left}
+#school .hd .ttl{font-family:var(--display);font-weight:500;font-size:16px;color:var(--white);flex:1}
+#school .hd .cnt{font-family:var(--mono);font-size:11px;color:var(--muted)}
+#school .hd svg{width:14px;height:14px;color:var(--muted);transition:transform .25s}
+#school.min .hd svg{transform:rotate(180deg)}
+#school .meter{height:3px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;margin:0 2px 8px}
+#school .meter i{display:block;height:100%;width:0;background:var(--peacock);transition:width .6s var(--ease)}
+#school ul{list-style:none;margin:0;padding:0}
+#school.min ul{display:none}
+#school li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-radius:8px;font-size:12.5px;color:var(--ivory);cursor:pointer}
+#school li:hover{background:rgba(255,255,255,.05)}
+#school li .ck{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line-strong);flex:none;display:grid;place-items:center;transition:background .3s,border-color .3s}
+#school li.done .ck{background:var(--peacock);border-color:var(--peacock)}
+#school li.done .ck::after{content:"";width:6px;height:3px;border-left:2px solid #06221f;border-bottom:2px solid #06221f;transform:translateY(-1px) rotate(-45deg)}
+#school li.done .lb{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.25)}
+#school li.next .lb{color:var(--white);font-weight:600}
+#school li .lb{flex:1}
+#school li kbd{font-size:9.5px;padding:2px 5px}
+#school.gone{opacity:0;transform:translateY(10px);pointer-events:none}
+@media (max-width:640px){#school{width:auto;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px))}#school:not(.min) ul{max-height:150px;overflow:auto}}
+
+/* Coach: one gentle nudge towards the next undiscovered feature */
+#coach{position:fixed;left:50%;bottom:calc(98px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);z-index:6;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:999px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .5s,transform .5s var(--ease);white-space:nowrap;max-width:calc(100vw - 32px)}
+#coach.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#coach .dot{width:7px;height:7px;border-radius:50%;background:var(--marigold);box-shadow:0 0 0 4px rgba(243,171,60,.2);animation:breathe 1.8s ease-in-out infinite;flex:none}
+#coach button{border:0;background:none;color:var(--muted);cursor:pointer;padding:2px 6px;font-size:16px;line-height:1}
+#coach button:hover{color:var(--white)}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 3px rgba(243,171,60,.25)}50%{box-shadow:0 0 0 7px rgba(243,171,60,.05)}}
+
+/* Immersive view: letterbox, white story text, nothing in front of the place */
+.letterbox{position:fixed;left:0;right:0;height:0;background:#000;z-index:10;transition:height .9s var(--ease);pointer-events:none}
+#lbTop{top:0}#lbBot{bottom:0}
+body.immersive .letterbox{height:7vh}
+#imm{position:fixed;inset:0;z-index:11;pointer-events:none;opacity:0;transition:opacity .9s ease .3s}
+body.immersive #imm{opacity:1}
+#imm::before{content:"";position:absolute;left:0;right:0;bottom:0;height:62vh;background:linear-gradient(to top,rgba(4,8,18,.62),rgba(4,8,18,.28) 45%,rgba(4,8,18,0));pointer-events:none}
+#imm .story{position:absolute;left:max(28px,env(safe-area-inset-left,0px));bottom:calc(7vh + 26px);width:min(560px,calc(100vw - 56px));color:var(--white);text-shadow:0 2px 24px rgba(0,0,0,.55),0 1px 3px rgba(0,0,0,.45)}
+#imm .story .k{font-size:11px;letter-spacing:.32em;text-transform:uppercase;font-weight:600;opacity:.9}
+#imm .story .n{font-family:var(--display);font-weight:400;font-size:clamp(28px,4vw,46px);line-height:1.05;letter-spacing:-.015em;margin:8px 0 10px}
+#imm .story p{margin:0;font-size:15px;line-height:1.65;opacity:.92}
+#imm .story .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+#imm .story .chip{border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:var(--white)}
+#imm .ctl{position:absolute;right:max(24px,env(safe-area-inset-right,0px));bottom:calc(7vh + 26px);display:flex;gap:8px;pointer-events:auto}
+#imm .ctl .pill{background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.3);color:var(--white);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#imm .ctl .pill:hover{background:rgba(0,0,0,.55)}
+#imm .idx{position:absolute;right:max(24px,env(safe-area-inset-right,0px));top:calc(7vh + 20px);font-family:var(--mono);font-size:11px;color:var(--white);opacity:.8;letter-spacing:.08em;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+#imm .esc{position:absolute;left:max(28px,env(safe-area-inset-left,0px));top:calc(7vh + 18px);font-size:12px;color:var(--white);opacity:.75;text-shadow:0 1px 8px rgba(0,0,0,.6);display:flex;gap:8px;align-items:center}
+@media (max-width:640px){#imm .story p{font-size:13.5px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}#imm .ctl{left:24px;right:24px;bottom:calc(7vh + 12px);justify-content:space-between}#imm .story{bottom:calc(7vh + 64px)}}
+
+/* Photo flash */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:30}
+#flash.go{animation:flash .6s ease-out}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
 
 /* Intro */
-#intro{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;background:radial-gradient(ellipse at 50% 55%,rgba(11,20,36,.05),rgba(11,20,36,.62));transition:opacity 1s}
+#intro{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;background:radial-gradient(ellipse at 50% 55%,rgba(7,13,26,.1),rgba(7,13,26,.72));transition:opacity 1s}
 #intro.gone{opacity:0;pointer-events:none}
-#intro .box{max-width:460px;width:100%;text-align:center}
-#intro h2{font-family:var(--display);font-weight:400;font-size:clamp(46px,9vw,76px);line-height:.95;margin:0 0 10px;text-shadow:0 4px 30px rgba(0,0,0,.5)}
-#intro h2 span{color:var(--marigold)}
-#intro p{line-height:1.5;margin:0 auto 22px;color:var(--ivory);opacity:.92;max-width:40ch;text-shadow:0 1px 10px rgba(0,0,0,.6);text-wrap:balance}
+#intro .box{max-width:520px;width:100%;text-align:center}
+#intro .eyebrow{color:var(--ivory);opacity:.8;letter-spacing:.32em}
+#intro h2{font-family:var(--display);font-weight:400;font-size:clamp(56px,11vw,104px);line-height:.92;margin:14px 0 18px;letter-spacing:-.03em;color:var(--white);text-shadow:0 4px 40px rgba(0,0,0,.45)}
+#intro h2 span{color:var(--marigold);font-style:italic}
+#intro p{font-size:15.5px;line-height:1.6;margin:0 auto 28px;color:var(--ivory);opacity:.92;max-width:42ch;text-shadow:0 1px 10px rgba(0,0,0,.6);text-wrap:balance}
 #intro .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.btn{height:46px;padding:0 22px;border-radius:999px;border:1px solid var(--line);background:rgba(10,18,34,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-weight:600;font-size:14.5px;transition:transform .15s,background .2s}
-.btn:hover{transform:translateY(-1px);background:rgba(10,18,34,.8)}
-.btn.primary{background:var(--marigold);color:#1a1206;border-color:var(--marigold)}
-.btn.primary:hover{background:#ffbb52}
-#loading{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:16px;min-height:1em;text-shadow:0 1px 6px rgba(0,0,0,.7)}
+.btn{height:48px;padding:0 24px;border-radius:999px;border:1px solid var(--line-strong);background:rgba(9,15,28,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);cursor:pointer;font-weight:600;font-size:14.5px;transition:transform .15s,background .2s}
+.btn:hover{transform:translateY(-1px);background:rgba(9,15,28,.8)}
+.btn.primary{background:var(--white);color:#0b1222;border-color:var(--white)}
+.btn.primary:hover{background:#ffe7bf}
+#intro .feat{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:26px;font-size:12px;color:var(--ivory);opacity:.78}
+#intro .feat span{display:flex;align-items:center;gap:6px}
+#intro .feat i{width:5px;height:5px;border-radius:50%;background:var(--marigold)}
+#loading{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:18px;min-height:1em;text-shadow:0 1px 6px rgba(0,0,0,.7)}
 
 /* Help */
-#help{position:fixed;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 32px));padding:18px 20px;border-radius:16px;background:var(--glass-strong)}
-#help h3{margin:0 0 10px;font-family:var(--display);font-weight:400;font-size:22px}
-#help dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px;font-size:13px}
+#help{position:fixed;z-index:15;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100vw - 32px));max-height:calc(100% - 40px);overflow:auto;padding:22px 24px;border-radius:22px;background:var(--glass-strong)}
+#help h3{margin:0 0 4px;font-family:var(--display);font-weight:500;font-size:26px;color:var(--white)}
+#help .sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+#help .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px 26px;margin-bottom:18px}
+#help dl{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:8px 0 0;font-size:13px;align-items:center}
 #help dt{white-space:nowrap}
-#help dd{margin:0;color:var(--muted)}
-kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--ivory);background:rgba(246,241,231,.06)}
+#help dd{margin:0;color:var(--ivory);opacity:.85}
+@media (max-width:640px){#help .cols{grid-template-columns:1fr}}
 
 @media (max-width:640px){
-  #brand h1{font-size:18px}
-  .ic{width:34px;height:34px}
-  #dock{gap:4px}
-  #caption .t{font-size:16px}
-  .ic[data-tip]:hover::after{display:none}
+  #brand h1{font-size:21px}
+  #found{min-width:140px}
+  .ic{width:36px;height:36px}
+  .ic .tip{display:none}
+  #caption{min-width:0;width:calc(100vw - 32px)}
+  #caption .acts .pill span{display:none}
+  #caption .acts .pill{padding:0 10px}
+  #caption .s .co,#caption .s .co+span{display:none}
+  #caption .s>span:nth-child(2){display:none}
+  #toast{top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))}
 }
-body.record #brand,body.record #dock,body.record #labels,body.record #toast,body.record #hint,body.record #minimap{display:none!important}
+@media (max-width:640px){body.immersive #toast{top:calc(7vh + 44px);bottom:auto}}
+body.record #brand,body.record #dock,body.record #labels,body.record #toast,body.record #hint,body.record #minimap,body.record #school,body.record #coach,body.record #telemetry{display:none!important}
 body.record #caption{bottom:56px;transition:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -157,76 +259,130 @@ body.record #caption{bottom:56px;transition:none}
 
 <header id="brand" class="hud">
   <h1>India <span>2047</span></h1>
-  <button id="found" class="glass" type="button" aria-label="Discoveries found"><span class="dots" id="foundDots"></span><b id="foundN">0/0</b></button>
+  <button id="found" class="glass" type="button" aria-label="Marvels discovered">
+    <span class="top"><i></i><span><b id="foundN">0</b><span class="of" id="foundOf">/19</span> marvels found</span><span class="go">View</span></span>
+    <span class="meter"><i id="foundBar"></i></span>
+  </button>
 </header>
 
-<nav id="dock" class="hud" aria-label="Controls">
-  <button class="ic on" id="btnTour" type="button" data-tip="Guided tour (T)" aria-label="Guided tour">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
-  </button>
-  <button class="ic" id="btnPlaces" type="button" data-tip="Places (P)" aria-label="Places">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-  </button>
-  <button class="ic" id="btnTime" type="button" data-tip="Time of day (N)" aria-label="Time of day">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-  </button>
-  <button class="ic" id="btnMusic" type="button" data-tip="Music (M)" aria-label="Music">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-  </button>
-  <button class="ic" id="btnCinema" type="button" data-tip="Hide controls (H)" aria-label="Hide controls">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-  </button>
-  <button class="ic" id="btnHelp" type="button" data-tip="How to fly" aria-label="How to fly">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5h.01"/></svg>
-  </button>
+<nav id="dock" class="hud glass" aria-label="Controls">
+  <button class="ic on" id="btnTour" type="button" aria-label="Guided tour"><span class="tip">Guided tour <kbd>T</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg></button>
+  <button class="ic" id="btnPlaces" type="button" aria-label="Places"><span class="tip">Places <kbd>P</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg></button>
+  <button class="ic" id="btnImmersive" type="button" aria-label="Immersive view"><span class="tip">Immersive view <kbd>I</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+  <button class="ic" id="btnTime" type="button" aria-label="Time of day"><span class="tip">Time of day <kbd>N</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+  <button class="ic" id="btnPhoto" type="button" aria-label="Take a photo"><span class="tip">Photo <kbd>C</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+  <hr>
+  <button class="ic" id="btnMusic" type="button" aria-label="Music"><span class="tip">Music <kbd>M</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+  <button class="ic" id="btnShare" type="button" aria-label="Copy a link to this view"><span class="tip">Share this view <kbd>L</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></button>
+  <button class="ic" id="btnCinema" type="button" aria-label="Hide controls"><span class="tip">Hide controls <kbd>H</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  <button class="ic" id="btnHelp" type="button" aria-label="How to fly"><span class="tip">How to fly <kbd>?</kbd></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5h.01"/></svg></button>
 </nav>
 
 <div id="popPlaces" class="pop glass hud" hidden>
-  <h3>Fly to</h3>
+  <h3 class="eyebrow">Fly to</h3>
   <div id="placeList"></div>
-  <h3>Music</h3>
+  <h3 class="eyebrow">Music</h3>
   <label class="vol" for="vol">Volume <input id="vol" type="range" min="0" max="1" step="0.01" value="0.6"></label>
 </div>
 <div id="popFound" class="pop glass hud" hidden>
-  <h3>Marvels of 2047</h3>
+  <h3 class="eyebrow">Marvels of 2047</h3>
   <div id="foundList"></div>
 </div>
+<div id="popTime" class="pop glass hud" hidden>
+  <h3 class="eyebrow">15 August 2047</h3>
+  <div class="clock"><b id="tClock">06:40</b><span>IST</span></div>
+  <div class="sunline" id="tSun">Sun 9° · ENE</div>
+  <div class="range"><input id="tRange" type="range" min="5" max="23.5" step="0.05" value="6.6" aria-label="Time of day"></div>
+  <div class="presets" id="tPresets"></div>
+  <div class="note">The sun follows its real path over India on Independence Day: it rises in the east-north-east and passes almost straight overhead at noon.</div>
+</div>
 
-<div id="placeTitle" class="hud" aria-hidden="true"><div><div class="k" id="ptK"></div><div class="n" id="ptN"></div></div></div>
-<div id="caption" class="glass hud hide" role="button" tabindex="0" aria-expanded="false" aria-label="Place details">
-  <div class="t" id="cName"></div>
-  <div class="s"><span id="cRegion"></span> · <span class="co" id="cCoords"></span></div>
+<div id="caption" class="glass hud hide">
+  <div class="head">
+    <button class="ttl" id="cToggle" type="button" aria-expanded="false" aria-controls="cText">
+      <div class="t" id="cName"></div>
+      <div class="s"><span id="cRegion"></span><span>·</span><span class="co" id="cCoords"></span></div>
+    </button>
+    <div class="acts">
+      <button class="pill" id="cStory" type="button" aria-label="Read the story"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-4a2 2 0 0 0-2 2"/></svg><span>Story</span></button>
+      <button class="pill primary" id="cImm" type="button" aria-label="Immersive view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Immersive</span></button>
+    </div>
+  </div>
   <div class="more" id="cText"></div>
   <div class="chips" id="cChips"></div>
   <div class="bar" id="cBar"><i></i></div>
 </div>
 
+<aside id="school" class="glass hud gone" aria-label="Flight school">
+  <button class="hd" id="schoolHd" type="button" aria-expanded="true"><span class="ttl">Flight school</span><span class="cnt" id="schoolCnt">0/8</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></button>
+  <div class="meter"><i id="schoolBar"></i></div>
+  <ul id="schoolList"></ul>
+</aside>
+<div id="coach" class="glass" role="status"><span class="dot"></span><span id="coachText"></span><button id="coachX" type="button" aria-label="Dismiss tip">×</button></div>
+
 <svg id="minimap" class="hud" aria-hidden="true"><path id="mmPath"/><g id="mmPlaces"/><circle id="mmDot" cx="0" cy="0" r="12"/></svg>
-<div id="toast" aria-live="polite"><div class="k" id="tKicker"></div><div class="n" id="tName"></div><div class="d" id="tText"></div></div>
+<div id="telemetry" class="hud" aria-hidden="true"></div>
+<div id="toast" class="glass" aria-live="polite"><div class="k" id="tKicker"></div><div class="n" id="tName"></div><div class="d" id="tText"></div></div>
 <div id="hint" role="status"></div>
 
-<div id="help" hidden>
+<div class="letterbox" id="lbTop"></div><div class="letterbox" id="lbBot"></div>
+<div id="imm" aria-live="polite">
+  <div class="esc"><kbd>Esc</kbd> Leave immersive view</div>
+  <div class="idx" id="immIdx">01 / 10</div>
+  <div class="story"><div class="k" id="immK"></div><div class="n" id="immN"></div><p id="immT"></p><div class="chips" id="immC"></div></div>
+  <div class="ctl">
+    <button class="pill" id="immPrev" type="button" aria-label="Previous place">← <span>Prev</span></button>
+    <button class="pill" id="immOrbit" type="button" aria-label="Pause or resume the orbit">Pause orbit</button>
+    <button class="pill" id="immNext" type="button" aria-label="Next place"><span>Next</span> →</button>
+    <button class="pill" id="immExit" type="button" aria-label="Leave immersive view">✕</button>
+  </div>
+</div>
+<div id="flash"></div>
+
+<div id="help" class="glass" hidden>
   <h3>How to fly</h3>
-  <dl>
-    <dt><kbd>Drag</kbd></dt><dd>Look around</dd>
-    <dt><kbd>Right drag</kbd> / <kbd>Shift</kbd>+drag</dt><dd>Slide across the ground</dd>
-    <dt><kbd>Scroll</kbd> / pinch</dt><dd>Zoom toward the cursor</dd>
-    <dt><kbd>Double-click</kbd></dt><dd>Dive to that spot</dd>
-    <dt><kbd>W A S D</kbd></dt><dd>Fly · <kbd>Q</kbd> <kbd>E</kbd> turn · <kbd>R</kbd> <kbd>F</kbd> climb</dd>
-    <dt><kbd>◆</kbd></dt><dd>A marvel. Fly close or click to discover it</dd>
-    <dt><kbd>T P N M H</kbd></dt><dd>Tour, places, time, music, hide controls</dd>
-  </dl>
+  <p class="sub">Everything here also works by touch: one finger to look, two to pinch and slide.</p>
+  <div class="cols">
+    <div><div class="eyebrow">Move</div><dl>
+      <dt><kbd>Drag</kbd></dt><dd>Look around</dd>
+      <dt><kbd>Right drag</kbd></dt><dd>Slide across the ground</dd>
+      <dt><kbd>Scroll</kbd></dt><dd>Zoom toward the cursor</dd>
+      <dt><kbd>Double-click</kbd></dt><dd>Dive to that spot</dd>
+      <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Fly · <kbd>Shift</kbd> for boost</dd>
+      <dt><kbd>Q</kbd><kbd>E</kbd> · <kbd>R</kbd><kbd>F</kbd></dt><dd>Turn · climb and descend</dd>
+    </dl></div>
+    <div><div class="eyebrow">Explore</div><dl>
+      <dt><kbd>I</kbd></dt><dd>Immersive view of a place</dd>
+      <dt><kbd>←</kbd><kbd>→</kbd></dt><dd>Next place, when immersive</dd>
+      <dt><kbd>T</kbd> · <kbd>P</kbd></dt><dd>Guided tour · places</dd>
+      <dt><kbd>N</kbd></dt><dd>Time of day</dd>
+      <dt><kbd>C</kbd> · <kbd>L</kbd></dt><dd>Photo · share this view</dd>
+      <dt><kbd>M</kbd> · <kbd>H</kbd></dt><dd>Music · hide controls</dd>
+    </dl></div>
+  </div>
+  <p class="sub">The drone has momentum: let go mid-drag and it glides, and it banks into turns. Diamonds ◆ mark the marvels; fly close or click one to discover it.</p>
   <button class="btn" id="helpClose" type="button">Back to flying</button>
 </div>
 
 <div id="intro">
   <div class="box">
+    <div class="eyebrow">15 August 2047 · India at 100</div>
     <h2>India <span>2047</span></h2>
-    <p>15 August 2047. India is a developed nation: clean rivers, clear air, a space station overhead and prosperity that reached every village. Fly the drone over ten places you know and find the marvels that got us here.</p>
+    <p>India is a developed nation: clean rivers, clear air, a space station overhead and prosperity that reached every village. Fly the drone over ten places you know and find the marvels that got us here.</p>
     <div class="btns">
       <button class="btn primary" id="startMusic" type="button">Fly with music</button>
       <button class="btn" id="startQuiet" type="button">Fly in silence</button>
     </div>
+    <div class="feat"><span><i></i>10 places</span><span><i></i>19 marvels</span><span><i></i>Immersive views</span><span><i></i>Real sun path</span></div>
     <div id="loading">Building the subcontinent…</div>
   </div>
 </div>
@@ -303,30 +459,66 @@ sun.shadow.camera.near = 10; sun.shadow.camera.far = 2600;
 scene.add(sun);
 scene.add(sun.target);
 
-// Time-of-day presets
+// Time of day. The four palettes are art-directed; the sun itself follows its real path for
+// 15 August 2047 at the drone's latitude and longitude (NOAA solar position equations, ~1° accurate).
 const TIMES = [
-  { name: 'Sunrise', elev: 0.16, az: 1.9, top: 0x3e5f96, horizon: 0xf7b680, bottom: 0x22384f, sunColor: 0xffcf96, sunI: 1.55, hemiSky: 0xd6e2ff, hemiGround: 0x6a6440, hemiI: 0.62, fog: 0xeec4a0, exposure: 1.0, glow: 0.25, stars: 0, bloom: 0.32, thr: 0.86 },
-  { name: 'Noon', elev: 1.05, az: 2.6, top: 0x2f6db7, horizon: 0xc4e2f6, bottom: 0x2a4a63, sunColor: 0xfff4e0, sunI: 2.1, hemiSky: 0xd9ecff, hemiGround: 0x6d7a47, hemiI: 0.75, fog: 0xc8e0f0, exposure: 0.95, glow: 0.0, stars: 0, bloom: 0.18, thr: 0.92 },
-  { name: 'Sunset', elev: 0.12, az: -1.3, top: 0x2b2d63, horizon: 0xff9558, bottom: 0x2a2440, sunColor: 0xffa860, sunI: 1.35, hemiSky: 0xb9a6e8, hemiGround: 0x5e4a38, hemiI: 0.6, fog: 0xe39a78, exposure: 1.05, glow: 0.65, stars: 0, bloom: 0.5, thr: 0.78 },
-  { name: 'Night', elev: 0.5, az: 0.6, top: 0x050b1d, horizon: 0x1c2c52, bottom: 0x050912, sunColor: 0x9fb8ff, sunI: 0.35, hemiSky: 0x4a5f9c, hemiGround: 0x141a28, hemiI: 0.3, fog: 0x141f3b, exposure: 1.12, glow: 1.0, stars: 1, bloom: 0.95, thr: 0.5 }
+  { name: 'Sunrise', hour: 6.5, top: 0x3e5f96, horizon: 0xf7b680, bottom: 0x22384f, sunColor: 0xffcf96, sunI: 1.55, hemiSky: 0xd6e2ff, hemiGround: 0x6a6440, hemiI: 0.62, fog: 0xeec4a0, exposure: 1.0, glow: 0.25, stars: 0, bloom: 0.32, thr: 0.86 },
+  { name: 'Noon', hour: 12.3, top: 0x2f6db7, horizon: 0xc4e2f6, bottom: 0x2a4a63, sunColor: 0xfff4e0, sunI: 2.1, hemiSky: 0xd9ecff, hemiGround: 0x6d7a47, hemiI: 0.75, fog: 0xc8e0f0, exposure: 0.95, glow: 0.0, stars: 0, bloom: 0.18, thr: 0.92 },
+  { name: 'Sunset', hour: 18.1, top: 0x2b2d63, horizon: 0xff9558, bottom: 0x2a2440, sunColor: 0xffa860, sunI: 1.35, hemiSky: 0xb9a6e8, hemiGround: 0x5e4a38, hemiI: 0.6, fog: 0xe39a78, exposure: 1.05, glow: 0.65, stars: 0, bloom: 0.5, thr: 0.78 },
+  { name: 'Night', hour: 21, top: 0x050b1d, horizon: 0x1c2c52, bottom: 0x050912, sunColor: 0x9fb8ff, sunI: 0.35, hemiSky: 0x4a5f9c, hemiGround: 0x141a28, hemiI: 0.3, fog: 0x141f3b, exposure: 1.12, glow: 1.0, stars: 1, bloom: 0.95, thr: 0.5 }
 ];
-const tod = { idx: 0, cur: {} };
-(function initTod() { const t = TIMES[0]; for (const k in t) tod.cur[k] = (typeof t[k] === 'number' && k !== 'name' && !/top|horizon|bottom|sunColor|hemiSky|hemiGround|fog/.test(k)) ? t[k] : (typeof t[k] === 'number' ? new THREE.Color(t[k]) : t[k]); })();
+// palette keyframes across the day: which preset dominates at each hour (IST)
+const TOD_KEYS = [[4.9, 3], [6.5, 0], [8.6, 1], [12.3, 1], [15.8, 1], [18.1, 2], [19.5, 3], [28.9, 3]];
+const TOD_NUM = ['sunI', 'hemiI', 'exposure', 'glow', 'stars', 'bloom', 'thr'], TOD_COL = ['top', 'horizon', 'bottom', 'sunColor', 'hemiSky', 'hemiGround', 'fog'];
+TIMES.forEach(t => TOD_COL.forEach(k => { t['_' + k] = new THREE.Color(t[k]); }));
+const tod = { idx: 0, hour: TIMES[0].hour, h: TIMES[0].hour, forward: true, cur: { elev: 0.16, az: 0 }, sun: { elev: 0, az: 0 } };
+TOD_COL.forEach(k => { tod.cur[k] = new THREE.Color(); });
+const DEG = Math.PI / 180;
+// Solar elevation and compass azimuth (radians, azimuth clockwise from north) for 15 Aug 2047, hour in IST
+function solarPos(hIST, lat, lon) {
+  const hu = hIST - 5.5, g = 2 * Math.PI / 365 * (226 + (hu - 12) / 24);
+  const dec = 0.006918 - 0.399912 * Math.cos(g) + 0.070257 * Math.sin(g) - 0.006758 * Math.cos(2 * g) + 0.000907 * Math.sin(2 * g) - 0.002697 * Math.cos(3 * g) + 0.00148 * Math.sin(3 * g);
+  const eqt = 229.18 * (0.000075 + 0.001868 * Math.cos(g) - 0.032077 * Math.sin(g) - 0.014615 * Math.cos(2 * g) - 0.040849 * Math.sin(2 * g));
+  const ha = ((hu * 60 + eqt + 4 * lon) / 4 - 180) * DEG, la = lat * DEG;
+  const elev = Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(ha));
+  const az = Math.atan2(Math.sin(ha), Math.cos(ha) * Math.sin(la) - Math.tan(dec) * Math.cos(la)) + Math.PI;
+  return { elev, az };
+}
+// scene axes: +x is east, -z is north
+const compassDir = (elev, az, out = new THREE.Vector3()) => out.set(Math.cos(elev) * Math.sin(az), Math.sin(elev), -Math.cos(elev) * Math.cos(az));
+const MOON = compassDir(0.5, 2.6); // a high moon in the south-east for the night palette
+function todBlend(h) {
+  h = ((h - 4.9) % 24 + 24) % 24 + 4.9;
+  for (let i = 0; i < TOD_KEYS.length - 1; i++) {
+    const [h0, a] = TOD_KEYS[i], [h1, b] = TOD_KEYS[i + 1];
+    if (h <= h1) { const t = smooth(0, 1, (h - h0) / (h1 - h0)); return [a, b, t]; }
+  }
+  return [3, 3, 0];
+}
+function setHour(h, forward) { tod.hour = ((h % 24) + 24) % 24; tod.forward = !!forward; }
 const glowMats = []; // materials whose emissiveIntensity follows night glow
+const _sd = new THREE.Vector3();
 function applyTod(dt) {
-  const t = TIMES[tod.idx], c = tod.cur, k = 1 - Math.exp(-dt * 1.4);
-  ['elev', 'az', 'sunI', 'hemiI', 'exposure', 'glow', 'stars', 'bloom', 'thr'].forEach(p => { c[p] = lerp(c[p], t[p], k); });
-  ['top', 'horizon', 'bottom', 'sunColor', 'hemiSky', 'hemiGround', 'fog'].forEach(p => c[p].lerp(new THREE.Color(t[p]), k));
+  // ease the clock towards its target; preset jumps run the day forwards, the slider tracks directly
+  let d = tod.hour - tod.h; if (tod.forward) { if (d < 0) d += 24; } else { if (d > 12) d -= 24; if (d < -12) d += 24; }
+  tod.h = (tod.h + d * (1 - Math.exp(-dt * (tod.forward ? 1.1 : 6))) + 24) % 24;
+  const [a, b, t] = todBlend(tod.h), A = TIMES[a], B = TIMES[b], c = tod.cur;
+  TOD_NUM.forEach(k => { c[k] = lerp(A[k], B[k], t); });
+  TOD_COL.forEach(k => c[k].copy(A['_' + k]).lerp(B['_' + k], t));
+  // real sun at the drone's position; moonlight takes over once the sun is below the horizon
+  const s = solarPos(tod.h, toLat(cam.tgt.z), toLon(cam.tgt.x)); tod.sun = s;
+  const night = smooth(0.03, -0.12, s.elev);
+  compassDir(Math.max(s.elev, 0.03), s.az, _sd).lerp(MOON, night).normalize();
+  c.elev = Math.asin(_sd.y); c.az = s.az;
   skyUniforms.top.value.copy(c.top); skyUniforms.horizon.value.copy(c.horizon); skyUniforms.bottom.value.copy(c.bottom);
   skyUniforms.sunColor.value.copy(c.sunColor); skyUniforms.stars.value = c.stars;
-  const dir = new THREE.Vector3(Math.cos(c.elev) * Math.sin(c.az), Math.sin(c.elev), Math.cos(c.elev) * Math.cos(c.az));
-  skyUniforms.sunDir.value.copy(dir);
+  skyUniforms.sunDir.value.copy(_sd);
   sun.color.copy(c.sunColor); sun.intensity = c.sunI;
   hemi.color.copy(c.hemiSky); hemi.groundColor.copy(c.hemiGround); hemi.intensity = c.hemiI;
   scene.fog.color.copy(c.fog);
   renderer.toneMappingExposure = c.exposure;
   glowMats.forEach(m => { m.emissiveIntensity = (m.userData.base || 0) + c.glow * (m.userData.glow || 1); });
-  return dir;
+  return _sd;
 }
 
 // ---------- India outline (lon, lat), stylised ----------
@@ -1546,7 +1738,9 @@ function updateAir(t) {
   for (let i = 0; i < AIR_N; i++) {
     const o = airs[i], a = t * o.s + o.ph;
     const x = o.p.x + Math.cos(a) * o.r, z = o.p.z + Math.sin(a) * o.r * 0.8, y = o.p.ground + o.h + Math.sin(t * 0.6 + o.wob) * 4;
-    _e.set(0, -a - Math.PI / 2 + (o.s > 0 ? 0 : Math.PI), -0.06 * Math.sign(o.s), 'YXZ'); _q.setFromEuler(_e);
+    // coordinated turn: bank angle tan(φ) = v²/(g·r), with v = ω·r along the (elliptical) circuit
+    const v = Math.abs(o.s) * o.r * 0.9, bank = Math.atan(v * v / (9.81 * o.r));
+    _e.set(0, -a - Math.PI / 2 + (o.s > 0 ? 0 : Math.PI), -bank * Math.sign(o.s), 'YXZ'); _q.setFromEuler(_e);
     _m.compose(_p.set(x, y, z), _q, _s.set(1.1, 1.1, 1.1)); air.setMatrixAt(i, _m);
   }
   air.instanceMatrix.needsUpdate = true;
@@ -1723,7 +1917,29 @@ function marvel(def) { MARVELS.push(def); if (def.keep) { KEEP.push([def.x, def.
 function grp(x, y, z, ry = 0) { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); return g; }
 
 // 1. Gaganyaan launch, Sriharikota
-const ROCKET = { t0: 30, period: 75, launchNow() { this.t0 = elapsed + 7 - 45; } };
+const ROCKET = { t0: 30, period: 75, ign: 45, launchNow() { this.t0 = elapsed + 7 - this.ign; } };
+// LVM3 ascent, integrated once at load: two S200 boosters (sea-level thrust ~4.6 MN each, 205 t propellant
+// burned over ~130 s), 640 t lift-off mass, drag in an exponential atmosphere, and a gravity turn after the
+// tower is cleared. Heights in the scene are close to metres (the model is 37 units for the real 43.5 m),
+// so the trajectory is scaled by the same 0.85.
+ROCKET.traj = (() => {
+  const g0 = 9.81, dt = 0.05, F = 2 * 4.6e6, mdot = 2 * 1580, Cd = 0.45, A = 28.6, k = 0.85, out = [];
+  let m = 640000, x = 0, h = 0, vx = 0, vh = 0, pitch = 0; // pitch: angle from vertical
+  for (let t = 0; t <= 30; t += dt) {
+    const ramp = clamp(t / 0.6, 0, 1), thrust = F * ramp, v = Math.hypot(vx, vh);
+    const rho = 1.225 * Math.exp(-h / 8500), drag = 0.5 * rho * v * v * Cd * A;
+    if (t > 7 && t < 11) pitch = (t - 7) / 4 * 2.5 * DEG;          // programmed pitch kick, east over the Bay of Bengal
+    else if (t >= 11 && v > 1) pitch = Math.atan2(vx, vh);           // gravity turn: thrust follows velocity
+    const ux = v > 1 ? vx / v : 0, uh = v > 1 ? vh / v : 1;
+    let ax = (thrust * Math.sin(pitch) - drag * ux) / m, ah = (thrust * Math.cos(pitch) - drag * uh) / m - g0;
+    if (h <= 0 && ah < 0) { ah = 0; ax = 0; vx = vh = 0; }             // still held by its own weight on the pad
+    vx += ax * dt; vh += ah * dt; x += vx * dt; h = Math.max(0, h + vh * dt); m -= mdot * ramp * dt;
+    out.push({ x: x * k, h: h * k, v: Math.hypot(vx, vh), pitch, acc: Math.hypot(ax, ah + g0) / g0 });
+  }
+  return out;
+})();
+ROCKET.at = tt => { const tr = ROCKET.traj, f = clamp(tt / 0.05, 0, tr.length - 1), i = Math.floor(f), j = Math.min(i + 1, tr.length - 1), u = f - i, a = tr[i], b = tr[j];
+  return { x: lerp(a.x, b.x, u), h: lerp(a.h, b.h, u), v: lerp(a.v, b.v, u), pitch: lerp(a.pitch, b.pitch, u), acc: lerp(a.acc, b.acc, u) }; };
 marvel({ id: 'rocket', name: 'Gaganyaan launch', kicker: 'Space · Sriharikota', x: FL.rocket.x, z: FL.rocket.z, y: 50, keep: 40,
   text: 'An Indian crew, an Indian rocket, from the Bay of Bengal coast. The countdown has started. Stay a moment and watch what a generation of engineers earned.',
   build() {
@@ -1749,20 +1965,29 @@ marvel({ id: 'rocket', name: 'Gaganyaan launch', kicker: 'Space · Sriharikota',
     let spawnI = 0;
     marvelAnim.push((t, dt) => {
       const ph = ((t - ROCKET.t0) % ROCKET.period + ROCKET.period) % ROCKET.period;
-      const firing = ph > 45 && ph < 72;
-      const tt = Math.max(0, ph - 47);
-      const alt = ph > 47 ? 0.5 * 7 * tt * tt : 0;
-      r.position.set(alt * 0.12 * (alt / 1500), 1 + alt, 0);
-      r.rotation.z = -Math.min(0.5, alt / 2500);
-      r.visible = ph < 72;
+      const tt = ph - ROCKET.ign, firing = tt > 0 && tt < 27;
+      const st = ROCKET.at(Math.max(0, tt)); ROCKET.state = { tt, ...st };
+      r.position.set(st.x, 1 + st.h, 0);
+      r.rotation.z = -st.pitch;
+      r.visible = tt < 27;
       flame.visible = flame2.visible = firing;
-      if (firing) { flame.scale.set(1 + Math.sin(t * 40) * 0.08, 1 + Math.sin(t * 31) * 0.15 + (ph < 47 ? -0.4 : 0.2), 1); }
+      // the plume lengthens and widens as ambient pressure drops with altitude
+      const amb = Math.exp(-st.h / 0.85 / 8500), plume = 1 + (1 - amb) * 2.5;
+      if (firing) { flame.scale.set((1 + Math.sin(t * 40) * 0.08) * (0.9 + 0.4 * (1 - amb)), (1 + Math.sin(t * 31) * 0.15) * clamp(tt / 0.6, 0.3, 1) * plume, 1); flame2.scale.y = plume; }
       if (firing && Math.random() < 0.9) {
-        const p = P2[spawnI++ % P2.length]; const ground = alt < 5;
-        p.x = r.position.x + (Math.random() - 0.5) * (ground ? 20 : 2); p.y = r.position.y - 6 + (ground ? 2 : 0); p.z = (Math.random() - 0.5) * (ground ? 20 : 2); p.s = ground ? 4 : 2.2; p.life = 1;
+        const p = P2[spawnI++ % P2.length]; const ground = st.h < 8;
+        // exhaust leaves along the thrust line, behind the nozzle
+        p.x = st.x - Math.sin(st.pitch) * 6 + (Math.random() - 0.5) * (ground ? 20 : 2); p.y = 1 + st.h - Math.cos(st.pitch) * 6 + (ground ? 2 : 0); p.z = (Math.random() - 0.5) * (ground ? 20 : 2);
+        p.s0 = ground ? 4 : 2.2; p.s = p.s0; p.age = 0; p.life = 1; p.vx = (Math.random() - 0.5) * (ground ? 14 : 2); p.vz = (Math.random() - 0.5) * (ground ? 14 : 2); p.vy = ground ? 0.6 : 0;
       }
       for (let i = 0; i < P2.length; i++) {
-        const p = P2[i]; if (p.life > 0) { p.life -= dt * 0.12; p.s += dt * 2.2; p.y += dt * 0.6; }
+        const p = P2[i];
+        if (p.life > 0) {
+          // smoke: ground-cloud spreads outward and slows (drag), rises on buoyancy, drifts on the sea breeze, grows by diffusion (~sqrt t)
+          p.age += dt; p.life -= dt * 0.08; const damp = Math.exp(-dt * 0.6);
+          p.vx *= damp; p.vz *= damp; p.vy = p.vy * damp + dt * 0.35;
+          p.x += (p.vx - 1.4) * dt; p.z += (p.vz + 0.5) * dt; p.y += p.vy * dt; p.s = p.s0 + 3.2 * Math.sqrt(p.age);
+        }
         _m.compose(_p.set(f.x + p.x, f.ground + p.y, f.z + p.z), _q.identity(), _s.setScalar(p.life > 0 ? p.s : 0.0001)); puffs.setMatrixAt(i, _m);
       }
       puffs.instanceMatrix.needsUpdate = true;
@@ -2071,20 +2296,29 @@ const fwGeo = new THREE.BufferGeometry(); fwGeo.setAttribute('position', new THR
 const fireworks = new THREE.Points(fwGeo, new THREE.PointsMaterial({ size: 2.4, vertexColors: true, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
 fireworks.frustumCulled = false;
 const bursts = [];
+// Shells rise ballistically to their burst height (v0 = sqrt(2gh)), then each star flies with linear air drag:
+// v(t) = v0·e^(-kt) with gravity, so x = v0(1-e^(-kt))/k and y = (v0y + g/k)(1-e^(-kt))/k - g·t/k.
+const FW_G = 9.81, FW_K = 1.3;
 function updateFireworks(t, dt) {
   const night = tod.cur.glow > 0.6;
-  if (night && bursts.length < 6 && Math.random() < dt * 1.4) {
+  if (night && bursts.length < 7 && Math.random() < dt * 1.4) {
     const ids = ['delhi', 'mumbai', 'kolkata', 'bengaluru', 'hyderabad', 'varanasi', 'agra', 'amritsar'];
     const p = P[ids[Math.floor(Math.random() * ids.length)]];
     const hue = Math.random(), col = new THREE.Color().setHSL(hue, 0.9, 0.62);
-    const parts = []; for (let i = 0; i < 150; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, s = Math.sqrt(1 - u * u); const sp = 14 + Math.random() * 6; parts.push([Math.cos(a) * s * sp, u * sp, Math.sin(a) * s * sp]); }
-    bursts.push({ x: p.x + rr(-120, 120), y: p.ground + rr(70, 120), z: p.z + rr(-120, 120), age: 0, col, parts });
+    const parts = []; for (let i = 0; i < 140; i++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, s = Math.sqrt(1 - u * u); const sp = 30 + Math.random() * 8; parts.push([Math.cos(a) * s * sp, u * sp, Math.sin(a) * s * sp]); }
+    const h = rr(70, 120), x = p.x + rr(-120, 120), z = p.z + rr(-120, 120), gy = p.ground;
+    bursts.push({ x, z, gy, y: gy + h, v0: Math.sqrt(2 * FW_G * h), rise: Math.sqrt(2 * h / FW_G), age: 0, col, parts });
   }
   const pos = fwGeo.attributes.position.array, cl = fwGeo.attributes.color.array; let n = 0;
-  for (let b = bursts.length - 1; b >= 0; b--) { bursts[b].age += dt; if (bursts[b].age > 2.6) bursts.splice(b, 1); }
+  for (let b = bursts.length - 1; b >= 0; b--) { bursts[b].age += dt; if (bursts[b].age > bursts[b].rise + 3.2) bursts.splice(b, 1); }
+  const put = (x, y, z, r, g, b) => { pos[n * 3] = x; pos[n * 3 + 1] = y; pos[n * 3 + 2] = z; cl[n * 3] = r; cl[n * 3 + 1] = g; cl[n * 3 + 2] = b; n++; };
   for (const b of bursts) {
-    const a = b.age, fade = Math.max(0, 1 - a / 2.6);
-    for (const [vx, vy, vz] of b.parts) { if (n >= FW_N) break; pos[n * 3] = b.x + vx * a; pos[n * 3 + 1] = b.y + vy * a - 4.9 * a * a; pos[n * 3 + 2] = b.z + vz * a; cl[n * 3] = b.col.r * fade; cl[n * 3 + 1] = b.col.g * fade; cl[n * 3 + 2] = b.col.b * fade; n++; }
+    if (b.age < b.rise) { // the shell climbing, with a short spark trail
+      for (let k = 0; k < 4 && n < FW_N; k++) { const a = Math.max(0, b.age - k * 0.05); put(b.x, b.gy + b.v0 * a - 0.5 * FW_G * a * a, b.z, 1 * (1 - k * 0.2), 0.8 * (1 - k * 0.2), 0.5 * (1 - k * 0.2)); }
+      continue;
+    }
+    const a = b.age - b.rise, e = 1 - Math.exp(-FW_K * a), fade = Math.max(0, 1 - a / 3.2), tw = a > 2 ? 0.6 + 0.4 * Math.sin(t * 40 + b.x) : 1;
+    for (const [vx, vy, vz] of b.parts) { if (n >= FW_N) break; put(b.x + vx * e / FW_K, b.y + (vy + FW_G / FW_K) * e / FW_K - FW_G * a / FW_K, b.z + vz * e / FW_K, b.col.r * fade * tw, b.col.g * fade * tw, b.col.b * fade * tw); }
   }
   fwGeo.setDrawRange(0, n); fwGeo.attributes.position.needsUpdate = true; fwGeo.attributes.color.needsUpdate = true;
 }
@@ -2155,18 +2389,40 @@ marvel({ id: 'kites', name: 'Uttarayan kite sky', kicker: 'Festival · Ahmedabad
   text: 'The old city flies thousands of kites from its terraces. Some traditions needed no upgrading at all.',
   build() {
     const cols = [0xff3b30, 0xffcc00, 0x34c759, 0x007aff, 0xff2d55, 0xffffff, 0xff9500, 0xaf52de].map(c => new THREE.Color(c));
-    for (let i = 0; i < KITE_N; i++) { kiteData.push({ x: AHM.x + rr(-120, 120), z: AHM.z + rr(-120, 120), h: rr(20, 70), ph: rand() * 6, s: rr(0.6, 1.2) }); kites.setColorAt(i, cols[i % cols.length]); }
-    scene.add(kites);
+    for (let i = 0; i < KITE_N; i++) {
+      const x = AHM.x + rr(-120, 120), z = AHM.z + rr(-120, 120), el = rr(42, 62) * DEG, h = rr(20, 70);
+      kiteData.push({ x, z, roof: Math.max(heightAt(x, z), 0) + rr(3, 6), L: h / Math.sin(el), el, ph: rand() * 6.28, w: rr(0.35, 0.7), A: rr(0.12, 0.32), s: rr(0.6, 1.2) });
+      kites.setColorAt(i, cols[i % cols.length]);
+    }
+    scene.add(kites, kiteLines);
     for (let i = 0; i < 180; i++) { const x = AHM.x + rr(-130, 130), z = AHM.z + rr(-130, 130); houses.push({ x, z, y: heightAt(x, z), s: rr(2.6, 4), h: rr(2.5, 6), rot: rand() * Math.PI }); }
     return null;
   } });
+// Each kite is tethered to a rooftop and flies downwind on its line, its sail facing the flyer. Fighter kites (patang)
+// sweep figure-eights across the wind window: azimuth swings at ω, elevation at 2ω, and the kite banks into each swing.
+// The wind is the August south-west monsoon, blowing towards the east-north-east.
+const KITE_WIND = new THREE.Vector3(0.93, 0, -0.36).normalize(), KITE_SEG = 3;
+const kiteLines = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(KITE_N * KITE_SEG * 6), 3)), new THREE.LineBasicMaterial({ color: 0xf4efe6, transparent: true, opacity: 0.22, depthWrite: false }));
+kiteLines.frustumCulled = false;
+const _ka = new THREE.Vector3(), _kp = new THREE.Vector3(), _kd = new THREE.Vector3(), _kq = new THREE.Quaternion(), _kUp = new THREE.Vector3(0, 1, 0), _kZ = new THREE.Vector3(0, 0, 1), _km = new THREE.Matrix4();
 function updateKites(t) {
+  if (!kiteData.length) return;
+  const gust = 1 + 0.06 * Math.sin(t * 0.21) + 0.03 * Math.sin(t * 0.77), lp = kiteLines.geometry.attributes.position.array;
   for (let i = 0; i < KITE_N; i++) {
-    const k = kiteData[i]; const y = Math.max(heightAt(k.x, k.z), 0) + k.h + Math.sin(t * 0.7 + k.ph) * 3;
-    _e.set(Math.sin(t * 1.3 + k.ph) * 0.3 - 0.5, Math.sin(t * 0.4 + k.ph) * 0.6, Math.sin(t * 1.1 + k.ph) * 0.25); _q.setFromEuler(_e);
-    _m.compose(_p.set(k.x + Math.sin(t * 0.5 + k.ph) * 2, y, k.z + Math.cos(t * 0.45 + k.ph) * 2), _q, _s.setScalar(k.s)); kites.setMatrixAt(i, _m);
+    const k = kiteData[i], wt = t * k.w + k.ph;
+    const az = k.A * Math.sin(wt), el = clamp(k.el * gust + 0.07 * Math.sin(2 * wt), 0.35, 1.35);
+    _kd.copy(KITE_WIND).applyAxisAngle(_kUp, az).multiplyScalar(Math.cos(el)); _kd.y = Math.sin(el);
+    _ka.set(k.x, k.roof, k.z); _kp.copy(_ka).addScaledVector(_kd, k.L);
+    // sail faces back down the line, then banks into the swing
+    _km.lookAt(_ka, _kp, _kUp); _q.setFromRotationMatrix(_km); _kq.setFromAxisAngle(_kZ, -0.6 * Math.cos(wt)); _q.multiply(_kq);
+    _m.compose(_kp, _q, _s.setScalar(k.s)); kites.setMatrixAt(i, _m);
+    // the line sags a little under its own weight
+    for (let j = 0; j < KITE_SEG; j++) {
+      const o = (i * KITE_SEG + j) * 6;
+      for (let e = 0; e < 2; e++) { const u = (j + e) / KITE_SEG, sag = 0.05 * k.L * 4 * u * (1 - u); lp[o + e * 3] = lerp(_ka.x, _kp.x, u); lp[o + e * 3 + 1] = lerp(_ka.y, _kp.y, u) - sag; lp[o + e * 3 + 2] = lerp(_ka.z, _kp.z, u); }
+    }
   }
-  kites.instanceMatrix.needsUpdate = true;
+  kites.instanceMatrix.needsUpdate = true; kiteLines.geometry.attributes.position.needsUpdate = true;
 }
 
 // ---------- People ----------
@@ -2389,12 +2645,27 @@ const genMusic = (() => {
 })();
 
 // ---------- Drone camera ----------
+const $ = id => document.getElementById(id);
 const cam = { tgt: new THREE.Vector3(P.delhi.x + 300, 3, P.delhi.z + 520), yaw: 0.15, pitch: 0.62, dist: 2300 };
 const fly = { active: false };
 const keys = {};
 let lastInteract = 0;
 const TOUR_ORDER = ['ladakh', 'amritsar', 'delhi', 'agra', 'varanasi', 'kolkata', 'hyderabad', 'bengaluru', 'kerala', 'mumbai'];
 const tour = { on: false, idx: -1, stay: 0, stayDur: 11 };
+const DIST_MIN = 12, DIST_MAX = 3600;
+
+// Drone dynamics. Every control drives an acceleration against linear air drag (dv/dt = a − c·v), integrated
+// exactly per frame: v ← v·e^(−c·dt) + (a/c)(1 − e^(−c·dt)). Let go of a drag and the drone keeps its momentum
+// and glides to a stop; it banks into lateral motion and turns like a real quadcopter gimbal.
+const drone = {
+  v: new THREE.Vector2(),       // ground velocity of the look-at point (x, z), units/s
+  yawV: 0, pitchV: 0, logV: 0,   // orbit and climb rates
+  zoomGoal: null, zoomAnchor: null,
+  roll: 0, dragging: false, lastMove: 0,
+  C_THRUST: 2.4, C_COAST: 3.0, C_TURN: 4.0, C_ORBIT: 5.0
+};
+const expInt = (v, a, c, dt) => { const e = Math.exp(-c * dt); return v * e + (a / c) * (1 - e); };
+function stopDrone() { drone.v.set(0, 0); drone.yawV = drone.pitchV = drone.logV = 0; drone.zoomGoal = null; drone.zoomAnchor = null; }
 
 function camPos(out, s = cam) {
   const cp = Math.cos(s.pitch);
@@ -2402,6 +2673,7 @@ function camPos(out, s = cam) {
 }
 function angDiff(a, b) { let d = (b - a) % (Math.PI * 2); if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; return d; }
 function flyTo(x, z, opts = {}) {
+  stopDrone();
   const from = { tgt: cam.tgt.clone(), yaw: cam.yaw, pitch: cam.pitch, dist: cam.dist };
   const to = { tgt: new THREE.Vector3(x, opts.y ?? heightAt(x, z), z), yaw: opts.yaw ?? cam.yaw, pitch: opts.pitch ?? 0.45, dist: opts.dist ?? 140 };
   const d = from.tgt.distanceTo(to.tgt);
@@ -2409,10 +2681,10 @@ function flyTo(x, z, opts = {}) {
 }
 function flyToPlace(p, opts = {}) {
   const done = opts.onDone;
-  // the big title lands with the drone, two-thirds of the way through the approach
+  // the title rises behind the landmark as the drone arrives, two-thirds of the way through the approach
   flyTo(p.x, p.z, Object.assign({ y: p.ground + (p.id === 'ladakh' ? 20 : 8), yaw: p.view.yaw, pitch: p.view.pitch, dist: p.view.dist }, opts, { onDone: () => { done && done(); } }));
   setActive(p.id, false);
-  clearTimeout(flyToPlace._t); flyToPlace._t = setTimeout(() => { if (activeId === p.id) showTitle(p.name, p.region); }, Math.max(300, fly.dur * 1000 * 0.62));
+  clearTimeout(flyToPlace._t); flyToPlace._t = setTimeout(() => { if (activeId === p.id) showTitle(p); }, Math.max(300, fly.dur * 1000 * 0.62));
 }
 function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
 function updateFly(dt) {
@@ -2440,95 +2712,266 @@ function groundUnder(cx, cy, exact) {
   const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -cam.tgt.y), out = new THREE.Vector3();
   return ray.ray.intersectPlane(plane, out) ? out : null;
 }
-function pan(dx, dy) {
+// screen-space drag → ground displacement of the look-at point
+function panDelta(dx, dy) {
   const s = cam.dist * 0.0016 * (55 / camera.fov);
-  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
-  cam.tgt.x += (-dx * rx + dy * fx / Math.max(0.35, Math.sin(cam.pitch))) * s;
-  cam.tgt.z += (-dx * rz + dy * fz / Math.max(0.35, Math.sin(cam.pitch))) * s;
+  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw), k = 1 / Math.max(0.35, Math.sin(cam.pitch));
+  return [(-dx * rx + dy * fx * k) * s, (-dx * rz + dy * fz * k) * s];
 }
 function zoomAt(factor, cx, cy) {
-  const nd = clamp(cam.dist * factor, 12, 3600);
+  const nd = clamp(cam.dist * factor, DIST_MIN, DIST_MAX);
   const pt = cx !== undefined ? groundUnder(cx, cy) : null;
   if (pt && factor < 1) { const f = 1 - nd / cam.dist; cam.tgt.x += (pt.x - cam.tgt.x) * f; cam.tgt.z += (pt.z - cam.tgt.z) * f; }
   cam.dist = nd;
 }
+// a move's velocity estimate, smoothed over the last few events (so a flick carries momentum)
+function track(prev, inst, dtm) { const w = clamp(dtm / 0.05, 0.2, 1); return lerp(prev, inst, w); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('pointerdown', e => {
-  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  interrupt(); canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+  interrupt(); canvas.classList.add('dragging'); stopDrone(); drone.dragging = true;
   dragMode = (e.button === 2 || e.shiftKey || e.ctrlKey) ? 'pan' : 'orbit';
   if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; }
 });
 canvas.addEventListener('pointermove', e => {
   if (!pointers.has(e.pointerId)) return;
-  const prev = pointers.get(e.pointerId), dx = e.clientX - prev.x, dy = e.clientY - prev.y;
-  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  lastInteract = performance.now();
+  const now = performance.now(), prev = pointers.get(e.pointerId), dx = e.clientX - prev.x, dy = e.clientY - prev.y, dts = Math.max(0.004, (now - prev.t) / 1000);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY, t: now });
+  lastInteract = now; drone.lastMove = now;
   if (pointers.size >= 2 && pinch0) {
     const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-    zoomAt(pinch0.d / d, mx, my); pan(mx - pinch0.mx, my - pinch0.my); pinch0 = { d, mx, my }; return;
+    zoomAt(pinch0.d / d, mx, my); const [px, pz] = panDelta(mx - pinch0.mx, my - pinch0.my); cam.tgt.x += px; cam.tgt.z += pz; pinch0 = { d, mx, my };
+    learn('zoom'); return;
   }
-  if (dragMode === 'pan') pan(dx, dy);
-  else { cam.yaw -= dx * 0.005; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.06, 1.52); }
+  if (Math.abs(dx) + Math.abs(dy) < 1) return;
+  if (dragMode === 'pan') {
+    const [px, pz] = panDelta(dx, dy); cam.tgt.x += px; cam.tgt.z += pz;
+    drone.v.set(track(drone.v.x, px / dts, dts), track(drone.v.y, pz / dts, dts));
+  } else {
+    const dyaw = -dx * 0.005, dp = dy * 0.004;
+    cam.yaw += dyaw; cam.pitch = clamp(cam.pitch + dp, 0.06, 1.52);
+    drone.yawV = track(drone.yawV, dyaw / dts, dts); drone.pitchV = track(drone.pitchV, dp / dts, dts);
+    learn('look');
+  }
 });
-const endPtr = e => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = null; if (!pointers.size) canvas.classList.remove('dragging'); };
+const endPtr = e => {
+  pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = null;
+  if (!pointers.size) {
+    canvas.classList.remove('dragging'); drone.dragging = false;
+    // a drag that stopped before release carries no momentum
+    if (performance.now() - drone.lastMove > 90) { drone.v.set(0, 0); drone.yawV = drone.pitchV = 0; }
+    // cap the flick so a glide carries the view a little further, never spins it away
+    drone.yawV = clamp(drone.yawV, -2.4, 2.4); drone.pitchV = clamp(drone.pitchV, -1.2, 1.2);
+    const vmax = cam.dist * 1.6, vl = drone.v.length(); if (vl > vmax) drone.v.multiplyScalar(vmax / vl);
+  }
+};
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
-canvas.addEventListener('wheel', e => { e.preventDefault(); interrupt(); zoomAt(Math.exp(clamp(e.deltaY, -120, 120) * 0.0016), e.clientX, e.clientY); }, { passive: false });
+canvas.addEventListener('wheel', e => {
+  e.preventDefault(); interrupt();
+  const lg = Math.log(cam.dist), goal = clamp((drone.zoomGoal ?? lg) + clamp(e.deltaY, -120, 120) * 0.0016, Math.log(DIST_MIN), Math.log(DIST_MAX));
+  drone.zoomGoal = goal; drone.zoomAnchor = goal < lg ? groundUnder(e.clientX, e.clientY) : null;
+  learn('zoom');
+}, { passive: false });
 canvas.addEventListener('dblclick', e => {
   interrupt(); const pt = groundUnder(e.clientX, e.clientY, true); if (!pt) return;
   flyTo(pt.x, pt.z, { y: Math.max(pt.y, 0), dist: Math.max(40, cam.dist * 0.3), pitch: Math.min(cam.pitch, 0.55), dur: 2.2 });
+  learn('dive');
 });
 addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT') return;
-  const k = e.key.toLowerCase(); keys[k] = true; if (e.shiftKey) keys.shift = true;
-  if ('wasdqerf'.includes(k) || k.startsWith('arrow')) { interrupt(); if (k.startsWith('arrow')) e.preventDefault(); }
+  if (e.target.tagName === 'INPUT' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (imm.on) { // immersive view has its own keys
+    if (k === 'arrowright') { e.preventDefault(); immStep(1); return; }
+    if (k === 'arrowleft') { e.preventDefault(); immStep(-1); return; }
+    if (k === ' ') { e.preventDefault(); toggleOrbit(); return; }
+    if (k === 'escape' || k === 'i') { exitImmersive(); return; }
+  }
+  keys[k] = true; if (e.shiftKey) keys.shift = true;
+  if ('wasdqerf'.includes(k) || k.startsWith('arrow')) { interrupt(); if (k.startsWith('arrow')) e.preventDefault(); if ('wasd'.includes(k) || k === 'arrowup' || k === 'arrowdown') learn('fly'); }
   if (k.length === 1 && 'wasdqerf'.indexOf(k) < 0 && e.repeat) return;
   if (k === 't') setTour(!tour.on); if (k === 'm') toggleMusic(); if (k === 'n') cycleTime();
   if (k === 'h') setCinema(!document.body.classList.contains('cinema')); if (k === 'p') togglePop('popPlaces');
-  if (k === 'escape') { document.getElementById('help').hidden = true; closePops(); }
+  if (k === 'i') enterImmersive(); if (k === 'c') takePhoto(); if (k === 'l') shareView();
+  if (e.key === '?') { closePops(); $('help').hidden = !$('help').hidden; }
+  if (k === 'escape') { $('help').hidden = true; closePops(); }
 });
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; if (!e.shiftKey) keys.shift = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-function updateKeys(dt) {
-  const sp = cam.dist * (keys.shift ? 2.2 : 0.8) * dt;
-  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+
+const _fwd = new THREE.Vector2();
+function updateDrone(dt) {
+  if (fly.active) { stopDrone(); return; }
+  const boost = keys.shift ? 2.75 : 1;
+  // thrust: terminal ground speed is proportional to altitude, as with any camera drone seen from above
   let mf = 0, mr = 0;
   if (keys.w || keys.arrowup) mf += 1; if (keys.s || keys.arrowdown) mf -= 1; if (keys.d) mr += 1; if (keys.a) mr -= 1;
-  cam.tgt.x += (fx * mf + rx * mr) * sp; cam.tgt.z += (fz * mf + rz * mr) * sp;
-  if (keys.q || keys.arrowleft) cam.yaw += dt * 1.1; if (keys.e || keys.arrowright) cam.yaw -= dt * 1.1;
-  if (keys.r) cam.dist = clamp(cam.dist * (1 + dt * 1.2), 12, 3600); if (keys.f) cam.dist = clamp(cam.dist * (1 - dt * 1.2), 12, 3600);
+  const thrusting = mf || mr, vt = cam.dist * 0.8 * boost;
+  const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
+  const n = Math.hypot(mf, mr) || 1, ax = (fx * mf + rx * mr) / n * vt, az = (fz * mf + rz * mr) / n * vt;
+  if (!drone.dragging) {
+    const c = thrusting ? drone.C_THRUST : drone.C_COAST;
+    drone.v.x = expInt(drone.v.x, thrusting ? ax * c : 0, c, dt); drone.v.y = expInt(drone.v.y, thrusting ? az * c : 0, c, dt);
+    cam.tgt.x += drone.v.x * dt; cam.tgt.z += drone.v.y * dt;
+    // yaw: keys spin up to 1.1 rad/s; a released orbit flick coasts down
+    const turn = (keys.q || keys.arrowleft ? 1 : 0) - (keys.e || keys.arrowright ? 1 : 0);
+    const ct = turn ? drone.C_TURN : drone.C_ORBIT;
+    drone.yawV = expInt(drone.yawV, turn * 1.1 * ct, ct, dt); cam.yaw += drone.yawV * dt;
+    drone.pitchV = expInt(drone.pitchV, 0, drone.C_ORBIT * 1.2, dt); cam.pitch = clamp(cam.pitch + drone.pitchV * dt, 0.06, 1.52);
+    if (cam.pitch <= 0.06 || cam.pitch >= 1.52) drone.pitchV = 0;
+  }
+  // climb: R/F accelerate the altitude rate in log space (so it feels the same high and low)
+  const climb = (keys.r ? 1 : 0) - (keys.f ? 1 : 0);
+  if (climb) drone.zoomGoal = null;
+  drone.logV = expInt(drone.logV, climb * 1.2 * drone.C_TURN, drone.C_TURN, dt);
+  if (Math.abs(drone.logV) > 1e-4) cam.dist = clamp(cam.dist * Math.exp(drone.logV * dt), DIST_MIN, DIST_MAX);
+  // wheel zoom eases to its goal and keeps the point under the cursor fixed
+  if (drone.zoomGoal !== null) {
+    const lg = Math.log(cam.dist), step = (drone.zoomGoal - lg) * (1 - Math.exp(-dt * 9));
+    const nd = clamp(Math.exp(lg + step), DIST_MIN, DIST_MAX), a = drone.zoomAnchor;
+    if (a && nd < cam.dist) { const f = 1 - nd / cam.dist; cam.tgt.x += (a.x - cam.tgt.x) * f; cam.tgt.z += (a.z - cam.tgt.z) * f; }
+    cam.dist = nd; if (Math.abs(drone.zoomGoal - Math.log(nd)) < 0.002) { drone.zoomGoal = null; drone.zoomAnchor = null; }
+  }
+  // bank: roll into sideways motion and into turns, like a drone gimbal that lags slightly behind the airframe
+  const lateral = (drone.v.x * rx + drone.v.y * rz) / Math.max(cam.dist, 1);
+  const bankT = clamp(-lateral * 0.16 + drone.yawV * 0.05, -0.12, 0.12);
+  drone.roll = lerp(drone.roll, bankT, 1 - Math.exp(-dt * 3));
 }
 
+// ---------- Immersive view ----------
+const imm = { on: false, id: null, orbit: true, fs: false, base: 0 };
+function enterImmersive(id) {
+  id = id || activeId || nearestPlace().id;
+  closePops(); $('help').hidden = true;
+  if (tour.on) { tour.on = false; $('btnTour').classList.remove('on'); $('cBar').hidden = true; }
+  if (!imm.on) {
+    imm.on = true; document.body.classList.add('immersive'); $('btnImmersive').classList.add('on');
+    const el = document.documentElement;
+    if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen({ navigationUI: 'hide' }).then(() => { imm.fs = true; }).catch(() => { });
+  }
+  learn('imm'); seen('btnImmersive');
+  goImm(id);
+}
+function goImm(id) {
+  const p = P[id]; imm.id = id; imm.orbit = true; $('immOrbit').textContent = 'Pause orbit';
+  $('immK').textContent = p.region; $('immN').textContent = p.name; $('immT').textContent = p.text;
+  $('immC').innerHTML = p.chips.map(c => `<span class="chip">${c}</span>`).join('');
+  $('immIdx').textContent = `${String(TOUR_ORDER.indexOf(id) + 1).padStart(2, '0')} / ${TOUR_ORDER.length}`;
+  // lower and closer than the overview: eye level with the landmark, the title standing behind it
+  imm.base = p.view.dist * 0.74;
+  flyTo(p.x, p.z, { y: p.ground + (p.id === 'ladakh' ? 22 : 10), yaw: p.view.yaw + 0.25, pitch: clamp(p.view.pitch * 0.55, 0.14, 0.3), dist: imm.base, dur: activeId === id ? 2.6 : undefined });
+  setActive(id, false); showTitle(p, true);
+  history.replaceState(null, '', '#place=' + id + '&immersive');
+}
+function immStep(d) { const i = TOUR_ORDER.indexOf(imm.id); goImm(TOUR_ORDER[(i + d + TOUR_ORDER.length) % TOUR_ORDER.length]); }
+function toggleOrbit() { imm.orbit = !imm.orbit; $('immOrbit').textContent = imm.orbit ? 'Pause orbit' : 'Resume orbit'; }
+function exitImmersive() {
+  if (!imm.on) return;
+  imm.on = false; document.body.classList.remove('immersive'); $('btnImmersive').classList.remove('on');
+  if (document.fullscreenElement && imm.fs) document.exitFullscreen().catch(() => { });
+  imm.fs = false; hideTitle();
+  history.replaceState(null, '', location.pathname + location.search);
+}
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && imm.on && imm.fs) { imm.fs = false; exitImmersive(); } });
+function updateImmersive(t, dt) {
+  if (!imm.on || fly.active || !imm.orbit || performance.now() - lastInteract < 3500 || drone.dragging) return;
+  // a slow cinematic orbit that breathes in and out
+  cam.yaw += dt * 0.045;
+  cam.dist = lerp(cam.dist, imm.base * (1 + 0.1 * Math.sin(t * 0.08)), 1 - Math.exp(-dt * 0.25));
+}
+$('immPrev').addEventListener('click', () => immStep(-1));
+$('immNext').addEventListener('click', () => immStep(1));
+$('immOrbit').addEventListener('click', toggleOrbit);
+$('immExit').addEventListener('click', exitImmersive);
+
+// ---------- Place titles, in the world, behind the landmark ----------
+// White type drawn onto a plane that stands behind each place relative to the drone, so the monument
+// occludes it the way a film title sits behind its subject. It is depth-tested, unfogged and untouched by tone mapping.
+const TITLE = { mesh: null, tex: {}, p: null, a: 0, target: 0, until: 0, persist: false, born: 0 };
+function titleTexture(p) {
+  if (TITLE.tex[p.id]) return TITLE.tex[p.id];
+  const W = 2048, H = 640, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const c = cv.getContext('2d');
+  const tracked = (txt, y, font, track, maxW) => {
+    c.font = font; let w = 0; const ws = [...txt].map(ch => { const m = c.measureText(ch).width; w += m + track; return m; }); w -= track;
+    const sc = Math.min(1, maxW / w); c.save(); c.translate(W / 2, y); c.scale(sc, sc); let x = -w / 2;
+    [...txt].forEach((ch, i) => { c.fillText(ch, x, 0); x += ws[i] + track; }); c.restore();
+  };
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic'; c.fillStyle = '#fff';
+  // white type over a bright, hazy horizon needs a soft dark halo to hold its shape; two passes, wide then tight
+  const draw = () => { tracked(p.region.toUpperCase(), 118, '600 52px Inter, system-ui, sans-serif', 22, W * 0.8); tracked(p.name.toUpperCase(), 470, '600 300px Fraunces, Georgia, serif', 18, W * 0.94); };
+  c.shadowColor = 'rgba(8,12,24,0.55)'; c.shadowBlur = 70; draw();
+  c.shadowColor = 'rgba(8,12,24,0.35)'; c.shadowBlur = 14; c.shadowOffsetY = 4; draw();
+  const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = renderer.capabilities.getMaxAnisotropy(); tex.generateMipmaps = true;
+  return (TITLE.tex[p.id] = tex);
+}
+function showTitle(p, persist = false) {
+  if (!TITLE.mesh) {
+    TITLE.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 640 / 2048), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, fog: false, toneMapped: false, color: 0xf2f2f2 }));
+    TITLE.mesh.renderOrder = 4; TITLE.mesh.visible = false; scene.add(TITLE.mesh);
+  }
+  const apply = () => {
+    if (TITLE.p !== p) { TITLE.mesh.material.map = titleTexture(p); TITLE.mesh.material.needsUpdate = true; }
+    TITLE.p = p; TITLE.target = 1; TITLE.persist = persist; TITLE.born = elapsed; TITLE.until = elapsed + 5.2; TITLE.mesh.visible = true;
+  };
+  (document.fonts && document.fonts.load) ? Promise.all([document.fonts.load('600 300px Fraunces'), document.fonts.load('600 52px Inter')]).then(apply, apply) : apply();
+}
+function hideTitle() { TITLE.target = 0; TITLE.persist = false; }
+const _tv3 = new THREE.Vector3();
+function updateTitle(dt) {
+  const m = TITLE.mesh; if (!m || !TITLE.p) return;
+  if (!TITLE.persist && elapsed > TITLE.until) TITLE.target = 0;
+  if (TITLE.p.id !== activeId && !imm.on) TITLE.target = 0;
+  TITLE.a = lerp(TITLE.a, TITLE.target, 1 - Math.exp(-dt * (TITLE.target ? 2.2 : 1.6)));
+  m.material.opacity = TITLE.a * 0.94; m.visible = TITLE.a > 0.01; if (!m.visible) return;
+  const p = TITLE.p, cp = camera.position;
+  // stand the title behind the place, along the drone's line of sight, sized to fill most of the frame
+  _tv3.set(p.x - cp.x, 0, p.z - cp.z); const hd = _tv3.length() || 1; _tv3.divideScalar(hd);
+  const D = clamp(cam.dist * 0.4, 40, 260), R = hd + D;
+  const fovW = 2 * R * Math.tan(camera.fov * DEG / 2) * Math.min(camera.aspect, 1.7);
+  const life = imm.on ? 0.5 : clamp((elapsed - TITLE.born) / 5.2, 0, 1), w = fovW * (camera.aspect < 1 ? 0.96 : 0.72) * (0.97 + 0.05 * life);
+  const cx = p.x + _tv3.x * D, cz = p.z + _tv3.z * D, rx = -_tv3.z * w * 0.45, rz = _tv3.x * w * 0.45;
+  const ground = Math.max(p.ground, heightAt(cx, cz), heightAt(cx + rx, cz + rz), heightAt(cx - rx, cz - rz), 0);
+  m.scale.set(w, w, 1);
+  m.position.set(cx, ground + w * (640 / 2048) * 0.42, cz);
+  m.lookAt(cp.x, m.position.y + (cp.y - m.position.y) * 0.35, cp.z);
+}
 
 // ---------- UI ----------
-const $ = id => document.getElementById(id);
 const labelsEl = $('labels'); labelsEl.classList.add('hud');
 const placeLabels = {}, beaconEls = {}, placeRows = {};
+const IMM_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
 TOUR_ORDER.forEach(id => {
   const p = P[id];
-  const row = document.createElement('button'); row.className = 'row'; row.type = 'button';
-  row.innerHTML = `<span class="n">${p.short}</span><span class="c">${p.region.split(' · ').pop()}</span>`;
-  row.addEventListener('click', () => { closePops(); goPlace(id); }); $('placeList').appendChild(row); placeRows[id] = row;
+  const row = document.createElement('div'); row.className = 'row'; row.setAttribute('role', 'button'); row.tabIndex = 0;
+  row.innerHTML = `<span style="flex:1;min-width:0"><span class="n">${p.short}</span><br><span class="c">${p.region.split(' · ').pop()}</span></span><button class="imm" type="button" aria-label="Immersive view of ${p.short}" title="Immersive view">${IMM_ICON}</button>`;
+  row.addEventListener('click', () => { closePops(); goPlace(id); });
+  row.addEventListener('keydown', e => { if (e.key === 'Enter') { closePops(); goPlace(id); } });
+  row.querySelector('.imm').addEventListener('click', e => { e.stopPropagation(); closePops(); enterImmersive(id); });
+  $('placeList').appendChild(row); placeRows[id] = row;
   const l = document.createElement('button'); l.className = 'plc'; l.type = 'button'; l.textContent = p.short;
   l.addEventListener('click', () => goPlace(id)); labelsEl.appendChild(l); placeLabels[id] = l;
 });
 function goPlace(id) {
+  learn('place');
+  if (imm.on) { goImm(id); return; }
   if (tour.on) { tour.idx = TOUR_ORDER.indexOf(id) - 1; nextTourStop(); }
   else { lastInteract = performance.now(); flyToPlace(P[id]); }
 }
+function nearestPlace() { let best = PLACES[0], bd = 1e18; for (const p of PLACES) { const d = (p.x - cam.tgt.x) ** 2 + (p.z - cam.tgt.z) ** 2; if (d < bd) { bd = d; best = p; } } return best; }
 
-// Caption (one line, opens on click)
+// Caption: name and actions; the story opens on demand
 let activeId = null;
 const caption = $('caption');
-caption.addEventListener('click', () => { const o = !caption.classList.contains('open'); caption.classList.toggle('open', o); caption.setAttribute('aria-expanded', o); });
-caption.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); caption.click(); } });
+function toggleStory() { const o = !caption.classList.contains('open'); caption.classList.toggle('open', o); $('cToggle').setAttribute('aria-expanded', o); }
+$('cToggle').addEventListener('click', toggleStory);
+$('cStory').addEventListener('click', toggleStory);
+$('cImm').addEventListener('click', () => enterImmersive(activeId));
 function setActive(id, withTitle = true) {
   if (activeId === id) return; activeId = id;
   Object.entries(placeRows).forEach(([k, r]) => r.classList.toggle('active', k === id));
   if (!id) { caption.classList.add('hide'); return; }
   const p = P[id];
   caption.classList.add('hide');
-  if (withTitle) showTitle(p.name, p.region);
+  if (withTitle) showTitle(p);
   setTimeout(() => {
     if (activeId !== id) return;
     $('cName').textContent = p.name; $('cRegion').textContent = p.region;
@@ -2536,15 +2979,7 @@ function setActive(id, withTitle = true) {
     $('cText').textContent = p.text;
     $('cChips').innerHTML = p.chips.map(c => `<span class="chip">${c}</span>`).join('');
     caption.classList.remove('hide');
-  }, withTitle ? 5400 : 300);
-}
-let titleT;
-function showTitle(name, kicker) {
-  const el = $('placeTitle'); clearTimeout(titleT);
-  el.classList.remove('show'); void el.offsetWidth; // restart the animation
-  $('ptN').textContent = name; $('ptK').textContent = kicker;
-  el.classList.add('show');
-  titleT = setTimeout(() => el.classList.remove('show'), 5300);
+  }, withTitle ? 3200 : 300);
 }
 let hintT;
 function hint(msg, ms = 1800) { const h = $('hint'); h.textContent = msg; h.classList.add('show'); clearTimeout(hintT); hintT = setTimeout(() => h.classList.remove('show'), ms); }
@@ -2554,6 +2989,7 @@ function toast(kicker, name, text, ms = 7000) {
   $('toast').classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('show'), ms);
 }
 function setTour(on, quiet) {
+  if (on && imm.on) exitImmersive();
   tour.on = on; $('btnTour').classList.toggle('on', on);
   $('cBar').hidden = !on;
   if (on) { const i = activeId ? TOUR_ORDER.indexOf(activeId) : -1; tour.idx = i; nextTourStop(); hint('Guided tour · drag anytime to take the controls'); }
@@ -2574,14 +3010,40 @@ function updateTour(dt) {
     if (tour.stay > tour.stayDur) nextTourStop();
   } else bar.style.width = '0%';
 }
-function cycleTime() { tod.idx = (tod.idx + 1) % TIMES.length; hint(TIMES[tod.idx].name + (tod.idx === 3 ? ' · watch the cities light up' : '')); }
+
+// Time of day: presets, a scrubber, and a live readout of the real sun
+const COMPASS = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+const compass = rad => COMPASS[Math.round(((rad / DEG % 360) + 360) % 360 / 22.5) % 16];
+const fmtHour = h => { h = ((h % 24) + 24) % 24; const hh = Math.floor(h), mm = Math.floor((h - hh) * 60); return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0'); };
+TIMES.forEach((t, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t.name; b.addEventListener('click', () => { setPreset(i); }); $('tPresets').appendChild(b); });
+function setPreset(i) { tod.idx = i; setHour(TIMES[i].hour, true); learn('time'); seen('btnTime'); hint(TIMES[i].name + ' · ' + fmtHour(TIMES[i].hour) + ' IST' + (i === 3 ? ' · watch the cities light up' : '')); }
+function cycleTime() {
+  // the next preset later in the day, wrapping past midnight
+  const h = tod.hour; let next = 0, best = 99;
+  TIMES.forEach((t, i) => { const d = ((t.hour - h) % 24 + 24) % 24; if (d > 0.05 && d < best) { best = d; next = i; } });
+  setPreset(next);
+}
+$('tRange').addEventListener('input', e => { setHour(+e.target.value, false); learn('time'); });
+let todUiT = 0;
+function updateTimeUi(dt) {
+  todUiT += dt; if (todUiT < 0.12 || $('popTime').hidden) return; todUiT = 0;
+  $('tClock').textContent = fmtHour(tod.h);
+  const s = tod.sun; $('tSun').textContent = s.elev > -0.01 ? `Sun ${(s.elev / DEG).toFixed(0)}° high · ${compass(s.az)} (${(s.az / DEG).toFixed(0)}°)` : 'Sun below the horizon · moonlight';
+  if (document.activeElement !== $('tRange')) { const h = ((tod.h - 5) % 24 + 24) % 24 + 5; $('tRange').value = Math.min(h, 23.5); }
+  let near = -1, nd = 0.6; TIMES.forEach((t, i) => { const d = Math.abs(angDiff(t.hour / 24 * 6.2832, tod.h / 24 * 6.2832)) / 6.2832 * 24; if (d < nd) { nd = d; near = i; } });
+  [...$('tPresets').children].forEach((b, i) => b.classList.toggle('on', i === near));
+}
+
 function setCinema(on) { document.body.classList.toggle('cinema', on); $('btnCinema').classList.toggle('on', on); closePops(); if (on) hint('Controls hidden · press H or the eye to bring them back', 2600); }
-function closePops() { $('popPlaces').hidden = true; $('popFound').hidden = true; }
-function togglePop(id) { const el = $(id), was = el.hidden; closePops(); el.hidden = !was; }
+function closePops() { $('popPlaces').hidden = true; $('popFound').hidden = true; $('popTime').hidden = true; ['btnPlaces', 'btnTime'].forEach(b => $(b).classList.remove('on')); }
+function togglePop(id) { const el = $(id), was = el.hidden; closePops(); el.hidden = !was; if (id === 'popPlaces') $('btnPlaces').classList.toggle('on', was); if (id === 'popTime') { $('btnTime').classList.toggle('on', was); todUiT = 1; updateTimeUi(0); } }
 $('btnTour').addEventListener('click', () => setTour(!tour.on));
-$('btnTime').addEventListener('click', cycleTime);
+$('btnTime').addEventListener('click', () => { seen('btnTime'); togglePop('popTime'); });
 $('btnMusic').addEventListener('click', () => toggleMusic());
 $('btnPlaces').addEventListener('click', () => togglePop('popPlaces'));
+$('btnImmersive').addEventListener('click', () => imm.on ? exitImmersive() : enterImmersive());
+$('btnPhoto').addEventListener('click', () => takePhoto());
+$('btnShare').addEventListener('click', () => shareView());
 $('found').addEventListener('click', () => { renderFoundList(); togglePop('popFound'); });
 $('btnCinema').addEventListener('click', () => setCinema(!document.body.classList.contains('cinema')));
 $('btnHelp').addEventListener('click', () => { closePops(); $('help').hidden = !$('help').hidden; });
@@ -2589,13 +3051,111 @@ $('helpClose').addEventListener('click', () => { $('help').hidden = true; });
 $('vol').addEventListener('input', e => setVolume(+e.target.value));
 canvas.addEventListener('pointerdown', closePops);
 
+// Photo: the frame as rendered, with a small credit line, saved as a PNG
+function takePhoto() {
+  if (!built) return;
+  learn('photo'); seen('btnPhoto');
+  frameBody(0); // render now so the drawing buffer holds this exact frame
+  const W = canvas.width, H = canvas.height, out = document.createElement('canvas'); out.width = W; out.height = H;
+  const c = out.getContext('2d'); c.drawImage(canvas, 0, 0);
+  const p = activeId ? P[activeId] : null, u = H / 1080;
+  const grad = c.createLinearGradient(0, H * 0.78, 0, H); grad.addColorStop(0, 'rgba(0,0,0,0)'); grad.addColorStop(1, 'rgba(0,0,0,0.42)'); c.fillStyle = grad; c.fillRect(0, H * 0.78, W, H * 0.22);
+  c.fillStyle = '#fff'; c.textBaseline = 'alphabetic';
+  c.font = `500 ${Math.round(40 * u)}px Fraunces, Georgia, serif`; c.fillText(p ? p.name : 'India 2047', 48 * u, H - 74 * u);
+  c.font = `600 ${Math.round(17 * u)}px Inter, system-ui, sans-serif`; c.globalAlpha = 0.82;
+  c.fillText(`INDIA 2047  ·  ${(p ? p.region : 'A developed India').toUpperCase()}  ·  ${fmtHour(tod.h)} IST, 15 AUG 2047`, 48 * u, H - 40 * u);
+  $('flash').classList.remove('go'); void $('flash').offsetWidth; $('flash').classList.add('go');
+  out.toBlob(b => {
+    if (!b) { hint('This browser could not save the photo'); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `india2047-${p ? p.id : 'view'}-${fmtHour(tod.h).replace(':', '')}.png`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    hint('Photo saved');
+  }, 'image/png');
+}
+
+// Share: a link that reopens this exact view (place or free camera, plus the time of day)
+function viewHash() {
+  if (imm.on) return `#place=${imm.id}&immersive&t=${tod.h.toFixed(2)}`;
+  if (activeId && !fly.active) return `#place=${activeId}&t=${tod.h.toFixed(2)}`;
+  return `#view=${toLat(cam.tgt.z).toFixed(3)},${toLon(cam.tgt.x).toFixed(3)},${cam.dist.toFixed(0)},${cam.yaw.toFixed(3)},${cam.pitch.toFixed(3)}&t=${tod.h.toFixed(2)}`;
+}
+function shareView() {
+  seen('btnShare');
+  const url = location.origin + location.pathname + location.search + viewHash();
+  const done = () => hint('Link copied · it opens this exact view', 2400);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => prompt('Copy this link', url));
+  else prompt('Copy this link', url);
+}
+function applyHash() {
+  const h = new URLSearchParams(location.hash.slice(1)); if (!location.hash) return false;
+  if (h.has('t')) { const t = +h.get('t'); if (isFinite(t)) { setHour(t, false); tod.h = tod.hour; } }
+  const place = h.get('place');
+  if (place && P[place]) { if (h.has('immersive')) enterImmersive(place); else flyToPlace(P[place]); return true; }
+  const v = (h.get('view') || '').split(',').map(Number);
+  if (v.length === 5 && v.every(isFinite)) { const q = ll(v[0], v[1]); flyTo(q.x, q.z, { dist: clamp(v[2], DIST_MIN, DIST_MAX), yaw: v[3], pitch: clamp(v[4], 0.06, 1.52) }); return true; }
+  return false;
+}
+
+// ---------- Flight school: every feature, discoverable by doing ----------
+const SKILLS = [
+  { id: 'look', label: 'Drag to look around', key: 'Drag', tip: 'Drag anywhere on the map to look around' },
+  { id: 'zoom', label: 'Scroll or pinch to zoom', key: 'Scroll', tip: 'Scroll or pinch to zoom toward a spot' },
+  { id: 'fly', label: 'Fly with W A S D', key: 'WASD', tip: 'Hold W to fly forward, Shift to boost. The drone has momentum' },
+  { id: 'dive', label: 'Double-click to dive', key: '2× click', tip: 'Double-click any spot to dive down to it' },
+  { id: 'place', label: 'Fly to a place', key: 'P', tip: 'Press P, or click a place name on the map' },
+  { id: 'imm', label: 'Open an immersive view', key: 'I', tip: 'Press I for a full-screen, cinematic view of this place' },
+  { id: 'time', label: 'Change the time of day', key: 'N', tip: 'Press N to move the sun along its real path' },
+  { id: 'marvel', label: 'Discover a marvel', key: '◆', tip: 'Fly close to a glowing ◆ diamond to discover a marvel' },
+  { id: 'photo', label: 'Take a photo', key: 'C', tip: 'Press C to save this view as a photo' }
+];
+const school = { done: new Set(), min: false, dismissed: false };
+try { const raw = localStorage.getItem('india2047-school'), s = JSON.parse(raw || '{}'); (s.done || []).forEach(x => school.done.add(x)); school.min = raw ? !!s.min : innerWidth < 640; } catch (e) { school.min = innerWidth < 640; }
+const seenBtns = new Set(); try { JSON.parse(localStorage.getItem('india2047-seen') || '[]').forEach(x => seenBtns.add(x)); } catch (e) { }
+function saveSchool() { try { localStorage.setItem('india2047-school', JSON.stringify({ done: [...school.done], min: school.min })); } catch (e) { } }
+function seen(btn) { if (seenBtns.has(btn)) return; seenBtns.add(btn); $(btn).classList.remove('new'); try { localStorage.setItem('india2047-seen', JSON.stringify([...seenBtns])); } catch (e) { } }
+['btnImmersive', 'btnTime', 'btnPhoto', 'btnShare'].forEach(b => { if (!seenBtns.has(b)) $(b).classList.add('new'); });
+function renderSchool() {
+  const n = school.done.size, next = SKILLS.find(s => !school.done.has(s.id));
+  $('schoolCnt').textContent = `${n}/${SKILLS.length}`; $('schoolBar').style.width = (n / SKILLS.length * 100) + '%';
+  $('school').classList.toggle('min', school.min); $('schoolHd').setAttribute('aria-expanded', !school.min);
+  $('schoolList').innerHTML = SKILLS.map(s => `<li data-id="${s.id}" class="${school.done.has(s.id) ? 'done' : ''}${next && next.id === s.id ? ' next' : ''}"><span class="ck"></span><span class="lb">${s.label}</span><kbd>${s.key}</kbd></li>`).join('');
+}
+function learn(id) {
+  if (school.done.has(id) || !built) return;
+  school.done.add(id); saveSchool(); renderSchool();
+  const next = SKILLS.find(s => !school.done.has(s.id)); hideCoach();
+  if (!next) { toast('Flight school · complete', 'You can fly anything now', 'Every control is yours. Try sunset over Mumbai in immersive view, then take a photo.', 8000); school.min = true; saveSchool(); setTimeout(renderSchool, 1200); }
+  else coachIdle = -4; // a beat before suggesting the next one
+}
+$('schoolHd').addEventListener('click', () => { school.min = !school.min; saveSchool(); renderSchool(); });
+$('schoolList').addEventListener('click', e => {
+  const li = e.target.closest('li'); if (!li) return; const id = li.dataset.id;
+  if (id === 'place') togglePop('popPlaces');
+  else if (id === 'imm') enterImmersive();
+  else if (id === 'time') togglePop('popTime');
+  else if (id === 'photo') takePhoto();
+  else if (id === 'marvel') { const m = MARVELS.find(m => !found.has(m.id) && !m.nightOnly) || MARVELS.find(m => !found.has(m.id)); if (m) goMarvel(m); }
+  else showCoach(SKILLS.find(s => s.id === id).tip);
+});
+let coachIdle = 0, coachT = 0;
+function showCoach(text) { $('coachText').textContent = text; $('coach').classList.add('show'); coachT = 7; }
+function hideCoach() { $('coach').classList.remove('show'); coachT = 0; }
+$('coachX').addEventListener('click', () => { school.dismissed = true; hideCoach(); });
+function updateCoach(dt) {
+  if (coachT > 0) { coachT -= dt; if (coachT <= 0) hideCoach(); return; }
+  if (!started || school.dismissed || imm.on || document.body.classList.contains('cinema') || !$('help').hidden) return;
+  const idle = performance.now() - lastInteract > 6000;
+  coachIdle = idle ? coachIdle + dt : Math.min(coachIdle, 0);
+  if (coachIdle > 3) { coachIdle = -14; const next = SKILLS.find(s => !school.done.has(s.id)); if (next) showCoach('Try it · ' + next.tip); }
+}
+
 // ---------- Discoveries ----------
 const found = new Set();
 try { JSON.parse(localStorage.getItem('india2047-found') || localStorage.getItem('bharat2047-found') || '[]').forEach(id => found.add(id)); } catch (e) { }
 function saveFound() { try { localStorage.setItem('india2047-found', JSON.stringify([...found])); } catch (e) { } }
 function renderFound() {
-  $('foundN').textContent = `${found.size}/${MARVELS.length}`;
-  $('foundDots').innerHTML = MARVELS.map(m => `<i class="${found.has(m.id) ? 'on' : ''}"></i>`).join('');
+  $('foundN').textContent = found.size; $('foundOf').textContent = '/' + MARVELS.length;
+  $('foundBar').style.width = (found.size / MARVELS.length * 100) + '%';
   MARVELS.forEach(m => { const b = beaconEls[m.id]; if (b) { b.classList.toggle('done', found.has(m.id)); b.querySelector('span').textContent = found.has(m.id) ? m.name : 'Something remarkable'; } });
 }
 function renderFoundList() {
@@ -2615,12 +3175,13 @@ MARVELS.forEach(m => {
 });
 renderFound();
 function goMarvel(m) {
-  interrupt();
+  interrupt(); if (imm.on) exitImmersive();
   if (m.sky) { flyTo(m.x, m.z, { y: 1650, dist: 220, pitch: 0.25, onDone: () => discover(m) }); return; }
   flyTo(m.x, m.z, { y: Math.max(0, heightAt(m.x, m.z)) + m.y * 0.45, dist: m.id === 'bullet' ? 160 : 120, pitch: 0.38, onDone: () => discover(m) });
 }
 function discover(m) {
   if (m.id === 'rocket') ROCKET.launchNow();
+  learn('marvel');
   if (found.has(m.id)) { toast(m.kicker, m.name, m.text, 6000); return; }
   found.add(m.id); saveFound(); renderFound();
   toast('Marvel discovered · ' + found.size + ' of ' + MARVELS.length, m.name, m.text);
@@ -2665,9 +3226,27 @@ function updateLabels() {
 let nearT = 0;
 function updateNearest(dt) {
   nearT += dt; if (nearT < 0.25) return; nearT = 0;
-  if (tour.on || fly.active) return;
-  let best = null, bd = 1e9; for (const p of PLACES) { const d = Math.hypot(p.x - cam.tgt.x, p.z - cam.tgt.z); if (d < bd) { bd = d; best = p; } }
+  if (tour.on || fly.active || imm.on) return;
+  const best = nearestPlace(), bd = Math.hypot(best.x - cam.tgt.x, best.z - cam.tgt.z);
   setActive(bd < Math.max(best.r * 2.2, 160) && cam.dist < 900 ? best.id : null);
+}
+
+// ---------- Telemetry: where the drone is, which way it faces, and live launch data at Sriharikota ----------
+const haversine = (la1, lo1, la2, lo2) => { const a = Math.sin((la2 - la1) * DEG / 2) ** 2 + Math.cos(la1 * DEG) * Math.cos(la2 * DEG) * Math.sin((lo2 - lo1) * DEG / 2) ** 2; return 6371 * 2 * Math.asin(Math.sqrt(a)); };
+let telT = 0;
+function updateTelemetry(dt) {
+  telT += dt; if (telT < 0.2) return; telT = 0;
+  // a few landmarks are nudged on the stylised map; near one, undo its nudge so the readout matches the real coordinates
+  const p = nearestPlace(), n = p.nudge || [0, 0], near = smooth(p.r * 8, p.r * 2, Math.hypot(p.x - cam.tgt.x, p.z - cam.tgt.z));
+  const lat = toLat(cam.tgt.z) - n[0] * near, lon = toLon(cam.tgt.x) - n[1] * near, hdg = ((Math.atan2(-Math.sin(cam.yaw), Math.cos(cam.yaw)) / DEG) + 360) % 360;
+  const km = haversine(toLat(cam.tgt.z), toLon(cam.tgt.x), toLat(p.z), toLon(p.x));
+  let html = `${lat.toFixed(2)}°N ${lon.toFixed(2)}°E · HDG ${String(Math.round(hdg)).padStart(3, '0')}° ${compass(hdg * DEG)}<br>${p.short} ${km < 1 ? 'below' : '· ' + (km < 10 ? km.toFixed(1) : Math.round(km)) + ' km'} · ${fmtHour(tod.h)} IST`;
+  const rs = ROCKET.state, rf = FL.rocket;
+  if (rs && Math.hypot(cam.tgt.x - rf.x, cam.tgt.z - rf.z) < 320) {
+    const tt = rs.tt, sec = Math.abs(tt), mmss = String(Math.floor(sec / 60)).padStart(2, '0') + ':' + String(Math.floor(sec % 60)).padStart(2, '0');
+    html += tt < 0 ? `<br><span class="hl">LVM3 · T−${mmss}</span>` : tt < 27 ? `<br><span class="hl">LVM3 · T+${mmss} · ${(rs.h / 0.85 / 1000).toFixed(2)} km · ${Math.round(rs.v * 3.6)} km/h · ${rs.acc.toFixed(1)} g</span>` : `<br><span class="hl">LVM3 · ascent continuing out of view</span>`;
+  }
+  $('telemetry').innerHTML = html;
 }
 
 // ---------- Minimap ----------
@@ -2745,14 +3324,14 @@ const RECORD = /[?&]record/.test(location.search);
 function frame() { if (RECORD) return; frameBody(Math.min(clock.getDelta(), 0.05)); requestAnimationFrame(frame); }
 function frameBody(dt) {
   elapsed += dt;
-  updateKeys(dt); updateFly(dt); updateTour(dt);
-  if (!tour.on && !fly.active && built && performance.now() - lastInteract > 14000) cam.yaw += dt * 0.025;
+  updateDrone(dt); updateFly(dt); updateTour(dt); updateImmersive(elapsed, dt);
+  if (!tour.on && !imm.on && !fly.active && built && performance.now() - lastInteract > 14000) cam.yaw += dt * 0.025;
   const gh = Math.max(heightAt(cam.tgt.x, cam.tgt.z), 0);
   if (!fly.active) cam.tgt.y = lerp(cam.tgt.y, gh + Math.min(cam.dist * 0.05, 10), 1 - Math.exp(-dt * 3));
   camPos(camera.position);
   const ch = Math.max(heightAt(camera.position.x, camera.position.z), 0) + 3;
   if (camera.position.y < ch) camera.position.y = ch;
-  camera.lookAt(cam.tgt);
+  camera.lookAt(cam.tgt); if (Math.abs(drone.roll) > 1e-4) camera.rotateZ(drone.roll);
   const nearP = clamp(cam.dist * 0.008, 0.5, 30); if (Math.abs(nearP - camera.near) > 0.05) { camera.near = nearP; camera.updateProjectionMatrix(); }
   const sd = applyTod(dt);
   // shadows follow the drone
@@ -2770,7 +3349,7 @@ function frameBody(dt) {
   cloudUniforms.lit.value.copy(tod.cur.sunColor).lerp(new THREE.Color(1, 1, 1), 0.55).lerp(new THREE.Color(0.55, 0.62, 0.8), nightK);
   cloudUniforms.shade.value.copy(tod.cur.top).lerp(tod.cur.horizon, 0.5).multiplyScalar(1.05).lerp(new THREE.Color(0.3, 0.36, 0.5), nightK);
   cloudUniforms.alpha.value = 1 - 0.75 * nightK;
-  if (built) { updateLife(elapsed, dt); updateLabels(); updateBeacons(dt); updateNearest(dt); updateMinimap(); }
+  if (built) { updateLife(elapsed, dt); updateLabels(); updateBeacons(dt); updateNearest(dt); updateMinimap(); updateTitle(dt); updateTelemetry(dt); updateTimeUi(dt); updateCoach(dt); }
   if (window.__skipRender) return;
   if (composer) { bloom.strength = tod.cur.bloom; bloom.threshold = tod.cur.thr; composer.render(); } else renderer.render(scene, camera);
 }
@@ -2781,11 +3360,16 @@ if (RECORD) {
 }
 
 // ---------- Boot ----------
+let started = false;
 function start(withMusic) {
-  $('intro').classList.add('gone');
+  $('intro').classList.add('gone'); started = true;
   setTimeout(() => { $('intro').hidden = true; }, 1100);
   if (withMusic) toggleMusic(true);
-  setTour(true);
+  if (!applyHash()) setTour(true);
+  // show what every control does for a few seconds, then bring in flight school
+  $('dock').classList.add('reveal'); setTimeout(() => $('dock').classList.remove('reveal'), 4200);
+  renderSchool(); setTimeout(() => $('school').classList.remove('gone'), 1600);
+  lastInteract = performance.now();
   setTimeout(() => { if (!found.size) toast('Tip', MARVELS.length + ' marvels are hidden', 'Look for the glowing diamonds. Fly close or tap one to discover it. Some only show at night.', 6500); }, 9000);
 }
 $('startMusic').addEventListener('click', () => start(true));
