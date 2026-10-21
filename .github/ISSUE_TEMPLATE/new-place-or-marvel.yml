@@ -1,0 +1,24 @@
+name: Propose a place or marvel
+description: Suggest a landmark, city or 2047 marvel to add to the map
+labels: ["content", "good first issue"]
+body:
+  - type: input
+    id: name
+    attributes: { label: Name, placeholder: "Konark Sun Temple / Brahmaputra green-hydrogen barges" }
+    validations: { required: true }
+  - type: input
+    id: location
+    attributes: { label: "Location (lat, lon)", placeholder: "19.89, 86.09" }
+  - type: textarea
+    id: story
+    attributes: { label: What does it look like in 2047?, description: One or two sentences, like the in-game captions. }
+    validations: { required: true }
+  - type: textarea
+    id: basis
+    attributes: { label: Real-world basis, description: Link the project, policy or technology this builds on. }
+  - type: checkboxes
+    id: build
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to build this myself
